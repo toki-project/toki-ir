@@ -1,8 +1,9 @@
 """Type expressions definition."""
 from __future__ import annotations
 
-from dataclasses import dataclass
 from typing import Any, Callable, Dict, List, Optional, Union
+
+from arxir.expr.modifiers import ScopeKind
 
 
 from arxir.expr.base import Expr
@@ -11,13 +12,14 @@ from arxir.expr.base import Expr
 class DataType(Expr):
     """Main data type class."""
 
-    @property
-    def value(self) -> int:
-        return self.args[0]
-
 
 class Boolean(DataType):
     """Boolean data type expression."""
+
+    value: bool
+
+    def __init__(self, value: bool):
+        self.value = value
 
 
 class Number(DataType):
@@ -26,6 +28,16 @@ class Number(DataType):
 
 class Integer(Number):
     """Integer number data type expression."""
+
+    value: int
+
+    def __init__(self, value: int):
+        self.value = value
+
+    @classmethod
+    @property
+    def name(cls) -> str:
+        return cls.__name__.lower()
 
 
 class SignedInteger(Integer):
@@ -51,6 +63,11 @@ class Int64(SignedInteger):
 class Floating(Number):
     """Floating number data type expression."""
 
+    value: float
+
+    def __init__(self, value: float):
+        self.value = value
+
 
 class Float16(Floating):
     """Float16 data type expression."""
@@ -62,3 +79,21 @@ class Float32(Floating):
 
 class Float64(Floating):
     """Float64 data type expression."""
+
+
+class VariableType(Expr):
+    """A variable."""
+
+    typ: Type[DataType]
+    name: str
+    scope: Scope
+
+    def __init__(
+        self,
+        name: str,
+        typ: Type[DataType],
+        scope: ScopeKind = ScopeKind.local,
+    ) -> None:
+        self.name = name
+        self.scope = scope
+        self.typ = typ

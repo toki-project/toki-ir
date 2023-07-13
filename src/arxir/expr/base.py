@@ -1,6 +1,8 @@
 """Type expressions definition."""
 from __future__ import annotations
 
+from typing import Any, Callable, Dict, List
+
 from dataclasses import dataclass
 from typing import Any, Callable, Dict, List, Optional, Union
 
@@ -12,17 +14,6 @@ class Expr:
         return self.__repr__()
 
     def __repr__(self) -> str:
-        fn_name = (
-            self.function.__name__
-            if not str(self.function) == 'expr'
-            else self._display_name
-        )
-
-        output = '{}({})'.format(fn_name, self.args)
-        return output
-
-    @property
-    def _display_name(self) -> str:
         return self.__class__.__name__
 
     @staticmethod

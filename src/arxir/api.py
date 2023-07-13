@@ -8,7 +8,7 @@ from arxir import operations as ops
 from arxir import rules as rls
 
 
-from arxir.backends.llvmir import LLVMIR
+from arxir.builders.llvmir import LLVMIR
 
 
 def builder() -> LLVMIR:

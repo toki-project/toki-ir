@@ -12,6 +12,17 @@ files = [
 ]
 
 [[package]]
+name = "atpublic"
+version = "4.0"
+description = "Keep all y'all's __all__'s in sync"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "atpublic-4.0-py3-none-any.whl", hash = "sha256:80057c55641253b86dcb68b524f82328172371b6547d4c7462a9127fbfbbabfc"},
+    {file = "atpublic-4.0.tar.gz", hash = "sha256:0f40433219e124edf115c6c363808ca6f0e1cfa7d160d86b2fb94793086d1294"},
+]
+
+[[package]]
 name = "attrs"
 version = "23.1.0"
 description = "Classes Without Boilerplate"
@@ -2457,4 +2468,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.8.1"
-content-hash = "32298ed3c63d7010fde0f6348d309d8abee95071a8f21eec15417c68986929df"
+content-hash = "f6f2918ff49bb9687fe33231205bc0bd1ae22deeece2c0d3f54084078276885c"
