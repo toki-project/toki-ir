@@ -1,14 +1,13 @@
 """Define the public arxir API."""
 from typing import Any, Protocol, Union, Callable, Dict, List
 
-from arxir.expr.base import Expr
-from arxir.expr import structures as sts
+from arxir import ast
 
 
 class BuilderTranslator(Protocol):
     """Builder translator visitor."""
 
-    def translate(self, expr: Expr) -> Union[str, Any]:
+    def translate(self, expr: ast.Expr) -> Union[str, Any]:
         """
         Translate a arxir expression.
 
@@ -30,8 +29,8 @@ class Builder(Protocol):
     def __init__(self) -> None:
         self.translator = BuilderTranslator()
 
-    def module(self) -> sts.Module:
-        return sts.Module()
+    def module(self) -> ast.Module:
+        return ast.Module()
 
     def compile(self, expr: str) -> str:
         return self.translator.translate(expr)

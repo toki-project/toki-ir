@@ -12,8 +12,8 @@ from __future__ import annotations
 
 from typing import Type
 
-from arxir.expr.base import Expr
-from arxir.expr import datatypes as dts
+from arxir.ast.base import Expr
+from arxir.ast import datatypes as dts
 
 
 class OperationExpr(Expr):
