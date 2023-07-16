@@ -14,9 +14,12 @@ def test_module():
         args=[var_a, var_b],
         return_type=ast.Int32
     )
+    # add_op = ast.BinaryOp(
+    #     op_code="+", lhs=var_a, rhs=var_b
+    # )
     block = ast.Block()
-    # var_sum = var_a + var_b
-    # block.append(var_sum)
+    var_sum = var_a + var_b
+    block.append(var_sum)
     fn = ast.Function(prototype=proto, body=block)
     module.block.append(fn)
 

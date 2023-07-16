@@ -14,6 +14,8 @@ class LLVMTranslator(BuilderTranslator):
         It works as a multi-dispatch visitor approach.
         """
         # structures
+        if type(expr) is ast.BinaryOp:
+            return self.translate_binary_op(expr)
         if type(expr) is ast.Block:
             return self.translate_block(expr)
         if type(expr) is ast.Function:
@@ -22,12 +24,48 @@ class LLVMTranslator(BuilderTranslator):
             return self.translate_function_prototype(expr)
         if type(expr) is ast.Module:
             return self.translate_module(expr)
+        if type(expr) is ast.Variable:
+            return self.translate_variable(expr)
 
         # datatypes
         if type(expr) is ast.Int32:
             return self.translate_i32(expr)
 
-        raise Exception("No translation was found for the given expression.")
+        raise Exception(
+            f"No translation was found for the given expression ({expr})."
+        )
+
+    def translate_binary_op(self, binop: ast.BinaryOp) -> str:
+        lhs = self.translate(binop.lhs)
+        rhs = self.translate(binop.rhs)
+
+        f_name = (
+            "add" if binop.op_code == "+" else
+            "sub" if binop.op_code == "-" else
+            "mul" if binop.op_code == "*" else
+            "div" if binop.op_code == "/" else
+            "rem" if binop.op_code == "%" else
+            ""
+        )
+
+        if not f_name:
+            raise Exception("The given binary operator is not valid.")
+
+        return (
+            # just an example
+            """
+            %1 = alloca i32, align 4
+            %2 = alloca i32, align 4
+            %3 = alloca i32, align 4
+            store i32 0, i32* %1, align 4
+            store i32 5, i32* %2, align 4
+            store i32 3, i32* %3, align 4
+            %4 = load i32, i32* %2, align 4
+            %5 = load i32, i32* %3, align 4
+            %6 = add nsw i32 %4, %5
+            ret i32 %6
+            """
+        )
 
     def translate_module(self, module: ast.Module) -> str:
         block_result = self.translate_block(module.block)
@@ -53,10 +91,10 @@ class LLVMTranslator(BuilderTranslator):
     ) -> str:
         scope = '@' if prototype.scope == ast.ScopeKind.global_ else "%"
         args = ", ".join(
-            f"{arg.type_.name} %{arg.name}" for arg in prototype.args
+            f"{arg.type_} %{arg.name}" for arg in prototype.args
         )
         return (
-            f"define {prototype.return_type.name} "
+            f"define {prototype.return_type} "
             f"{scope}{prototype.name}("
             f"{args}"
             ")"
@@ -70,3 +108,6 @@ class LLVMTranslator(BuilderTranslator):
             f"""{body_result}\n"""
             f"}}"
         )
+
+    def translate_variable(self, var: ast.Variable) -> str:
+        return "variable"

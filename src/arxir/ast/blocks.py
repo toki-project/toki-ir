@@ -4,8 +4,8 @@ import copy
 
 from enum import Enum
 from typing import List
-from arxast.base import Expr
-from arxast.blocks import (
+from astx.base import Expr
+from astx.blocks import (
     Block, Module as ModuleBase
 )
 
