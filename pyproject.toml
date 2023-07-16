@@ -15,6 +15,7 @@ packages = [
 [tool.poetry.dependencies]
 python = "^3.8.1"
 atpublic = "^4.0"
+astx = "^0.1.0"
 
 [tool.poetry.dev-dependencies]
 urllib3 = "<2"  # fix poetry issues

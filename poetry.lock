@@ -12,6 +12,20 @@ files = [
 ]
 
 [[package]]
+name = "astx"
+version = "0.1.0"
+description = "OSL Python Package contains all the boilerplate you need to create a Python package."
+optional = false
+python-versions = ">=3.8.1,<4.0.0"
+files = [
+    {file = "astx-0.1.0-py3-none-any.whl", hash = "sha256:060fc41c0270d6ee49c9a6d1f48476aa59097b10e7b155bf10deb880105c764c"},
+    {file = "astx-0.1.0.tar.gz", hash = "sha256:952c30a79a0c41ce32b3d004c262b181e80452d6e927d7724b00fc6143b1c957"},
+]
+
+[package.dependencies]
+atpublic = ">=4.0,<5.0"
+
+[[package]]
 name = "atpublic"
 version = "4.0"
 description = "Keep all y'all's __all__'s in sync"
@@ -2468,4 +2482,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.8.1"
-content-hash = "f6f2918ff49bb9687fe33231205bc0bd1ae22deeece2c0d3f54084078276885c"
+content-hash = "36f5013d4f40bc984a5531ebad608c4b12863df51f7a8c83453807c5c457e9b9"
