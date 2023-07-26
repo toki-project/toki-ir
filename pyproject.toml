@@ -16,6 +16,7 @@ packages = [
 python = "^3.8.1"
 atpublic = "^4.0"
 astx = "^0.1.0"
+sh = "^2.0.4"
 
 [tool.poetry.dev-dependencies]
 urllib3 = "<2"  # fix poetry issues
@@ -31,7 +32,6 @@ vulture = "^2.7"
 mccabe = "^0.6.1"
 ipython = "<8"
 ipykernel = ">=6.0.0"
-Jinja2 = "^3.1.2"
 mkdocs = "^1.4.3"
 mkdocs-exclude = "^1.0.2"
 mkdocs-jupyter = "^0.24.1"
@@ -40,6 +40,9 @@ mkdocs-macros-plugin = ">=0.7.0,<1"
 mkdocs-material = "^9.1.15"
 mkdocstrings = "^0.21.2"
 mkdocstrings-python = "^1.1.2"
+
+[tool.poetry.group.dev.dependencies]
+makim = "1.8.2"
 
 [tool.pytest.ini_options]
 testpaths = [

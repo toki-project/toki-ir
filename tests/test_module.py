@@ -1,13 +1,13 @@
+import pytest
+
 from arxir.builders.llvmir import LLVMIR
 from arxir import ast
 
-def test_module():
-    builder = LLVMIR()
 
-    module = builder.module()
-
-    var_a = ast.Variable(name="a", type_=ast.Int32)
-    var_b = ast.Variable(name="b", type_=ast.Int32)
+@pytest.fixture
+def fn_expr() -> ast.Expr:
+    var_a = ast.Variable(name="a", type_=ast.Int32, value=1)
+    var_b = ast.Variable(name="b", type_=ast.Int32, value=2)
 
     proto = ast.FunctionPrototype(
         name="add",
@@ -20,8 +20,26 @@ def test_module():
     block = ast.Block()
     var_sum = var_a + var_b
     block.append(var_sum)
-    fn = ast.Function(prototype=proto, body=block)
-    module.block.append(fn)
+    block.append(ast.Return(var_sum))
+    return ast.Function(prototype=proto, body=block)
 
-    print(builder.compile(module))
+
+def test_module_compile(fn_expr: ast.Expr):
+    builder = LLVMIR()
+
+    module = builder.module()
+    module.block.append(fn_expr)
+
+    ir_result = builder.compile(module)
+    print(ir_result)
+    assert ir_result
     assert False
+
+def test_module_build(fn_expr: ast.Expr):
+    builder = LLVMIR()
+
+    module = builder.module()
+    module.block.append(fn_expr)
+
+    builder.build(module, "/tmp/sum.exe")
+    builder.run()

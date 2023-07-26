@@ -3,6 +3,8 @@ channels:
   - nodefaults
   - conda-forge
 dependencies:
+  - clang 14.*
+  - clangdev 14.*
   - python <3.11
   - poetry
   - nodejs  # used by semantic-release

@@ -1,8 +1,7 @@
-import arx
+from arxir.builders import llvmir
 
 def test_add():
-    llvmir = arx.llvmir()
-    builder = llvmir.builder()
+    builder = llvmir.LLVMIR()
     module = builder.module()
 
     hello = builder.function("hello_world")
