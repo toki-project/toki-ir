@@ -1,6 +1,7 @@
 """Define the public arxir API."""
+from __future__ import annotations
 import tempfile
-from typing import Any, Protocol, Union, Callable, Dict, List
+from typing import Any, Protocol, Union, Callable, Dict, List, Optional
 
 import sh
 
@@ -52,39 +53,92 @@ class Builder(Protocol):
             f.write(result)
 
         # llc -filetype=obj hello-world.ll -o hello-world.o
-        sh.llc(["-filetype=obj", f"{self.tmp_path}.ll", "-o", f"{self.tmp_path}.o"])
+        sh.llc(
+            [
+                "-filetype=obj",
+                f"{self.tmp_path}.ll",
+                "-o",
+                f"{self.tmp_path}.o",
+            ]
+        )
         self.output_file = output_file
 
     def run(self) -> None:
         sh.clang([f"{self.tmp_path}.o", "-o", self.output_file])
 
 
+class ScopeNode:
+    name: str
+    variable: Dict[str, ast.DataType]
+    parent: Optional[ScopeNode]
+    default_parent: Optional[ScopeNode] = None
+
+    def __init__(self, name: str, parent=None):
+        self.variables: Dict[str, Any] = {}
+        self.parent: Optional[ScopeNode] = parent or ScopeNode.default_parent
+        self.name: str = name
+
+
+class Scope:
+    nodes: Dict[int, ScopeNode]
+    current: Optional[ScopeNode]
+    previous: Optional[ScopeNode]
+
+    def __init__(self) -> None:
+        self.nodes: Dict[int, ScopeNode] = {}
+        self.current = None
+        self.previous = None
+
+        self.add(ScopeNode("root"))
+
+        ScopeNode.default_parent = self.current
+
+    def add(self, name, parent=None, change_current=True):
+        node = ScopeNode(name, parent)
+
+        # The use of id(node) as keys in the nodes dictionary is generally
+        # fine, but be aware that this approach may lead to potential issues
+        # if the id() of a node is reused after its destruction. It's #
+        # unlikely to happen in your current code, but it's something to be aware of.
+        self.nodes[id(node)] = node
+
+        if len(self.nodes) == 1 or change_current:
+            self.previous = self.current
+            self.current = self.nodes[id(node)]
+
+        return node
+
+    def get_first(self) -> ScopeNode:
+        return self.nodes[0]
+
+    def get_last(self) -> ScopeNode:
+        return self.nodes[-1]
+
+    def destroy(self, node: ScopeNode) -> None:
+        del self.nodes[id(node)]
+        self.current = self.previous
+        self.previous = None
+
+    def set_default_parent(self, node: ScopeNode) -> None:
+        ScopeNode.default_parent = node
+
+
 class SymbolTable:
+    scopes: Scope
+
     def __init__(self):
-        self.stack = [{}]
+        self.scopes = Scope()
 
-    def push_scope(self):
-        self.stack.append({})
+    def define(self, expr: ast.DataType) -> None:
+        self.scopes.current.variables[expr.name] = expr
 
-    def pop_scope(self):
-        if len(self.stack) > 1:
-            return self.stack.pop()
-        else:
-            raise IndexError("Cannot pop the global scope")
+    def assign(self, expr: ast.DataType) -> None:
+        self.scopes.current.variables[expr.name] = expr
 
-    def define_variable(self, var: ast.Variable):
-        self.stack[-1][var.name] = var
-
-    def assign_variable(self, var: ast.Variable):
-        for scope in reversed(self.stack):
-            if name in scope:
-                scope[var.name] = var
-                break
-        else:
-            raise NameError(f"Name '{name}' is not defined")
-
-    def lookup_variable(self, name):
-        for scope in reversed(self.stack):
-            if name in scope:
-                return scope[name]
+    def lookup(self, name) -> ast.DataType:
+        scope = self.scopes.current
+        while scope is not None:
+            if name in scope.variables:
+                return scope.variables[name]
+            scope = scope.parent
         raise NameError(f"Name '{name}' is not defined")

@@ -7,12 +7,11 @@ from arxir.builders.base import Builder, BuilderTranslator, SymbolTable
 
 
 MAP_TYPE_STR = {
-    ast.Int8: 'i8',
-    ast.Int16: 'i16',
-    ast.Int32: 'i32',
-    ast.Int64: 'i64',
+    ast.Int8: "i8",
+    ast.Int16: "i16",
+    ast.Int32: "i32",
+    ast.Int64: "i64",
 }
-
 
 registers: List[int] = []
 registers_expr: Dict[int, int] = {}
@@ -61,12 +60,17 @@ class LLVMTranslator(BuilderTranslator):
         rhs_type = MAP_TYPE_STR[binop.rhs.type_]
 
         op_name = (
-            "add" if binop.op_code == "+" else
-            "sub" if binop.op_code == "-" else
-            "mul" if binop.op_code == "*" else
-            "div" if binop.op_code == "/" else
-            "rem" if binop.op_code == "%" else
-            ""
+            "add"
+            if binop.op_code == "+"
+            else "sub"
+            if binop.op_code == "-"
+            else "mul"
+            if binop.op_code == "*"
+            else "div"
+            if binop.op_code == "/"
+            else "rem"
+            if binop.op_code == "%"
+            else ""
         )
 
         if not op_name:
@@ -91,25 +95,35 @@ class LLVMTranslator(BuilderTranslator):
         result += alloca_tpl.format(reg[-1], rhs_type)
 
         # store
-        result += store_tpl.format(lhs_type, binop.lhs.value, lhs_type, reg[-1]-1)
-        result += store_tpl.format(rhs_type, binop.rhs.value, rhs_type, reg[-1])
+        reg_lhs = registers_expr[id(binop.lhs)]
+        reg_rhs = registers_expr[id(binop.rhs)]
+        result += store_tpl.format(lhs_type, reg_lhs, lhs_type, reg[-1] - 1)
+        result += store_tpl.format(rhs_type, reg_rhs, rhs_type, reg[-1])
 
         # load
         reg[-1] += 1
-        result += load_tpl.format(reg[-1], lhs_type, lhs_type, lhs_type, reg[-1]-2)
+        result += load_tpl.format(reg[-1], lhs_type, lhs_type, reg[-1] - 2)
         reg[-1] += 1
-        result += load_tpl.format(reg[-1], rhs_type, rhs_type, rhs_type, reg[-1]-4)
+        result += load_tpl.format(reg[-1], rhs_type, rhs_type, reg[-1] - 4)
 
         # operation
         reg[-1] += 1
-        result += op_tpl.format(reg[-1], op_name, lhs_type, reg[-1]-1, reg[-1]-2)
+        result += op_tpl.format(
+            reg[-1], op_name, lhs_type, reg[-1] - 1, reg[-1] - 2
+        )
 
         registers_expr[id(binop)] = reg[-1]
 
         return result
 
     def translate_module(self, module: ast.Module) -> str:
+        scope = symtable.scopes.add(f"module {module.name}")
+        symtable.scopes.set_default_parent(scope)
+
         block_result = self.translate_block(module.block)
+
+        symtable.scopes.set_default_parent(scope.parent)
+        symtable.scopes.destroy(scope)
 
         return (
             f"""; ModuleID = '{module.name}'\n"""
@@ -130,11 +144,11 @@ class LLVMTranslator(BuilderTranslator):
     def translate_function_prototype(
         self, prototype: ast.FunctionPrototype
     ) -> str:
-        scope = '@' if prototype.scope == ast.ScopeKind.global_ else "%"
+        scope = "@" if prototype.scope == ast.ScopeKind.global_ else "%"
 
         trans_args = []
         for i, arg in enumerate(prototype.args):
-            systable.define_variable(arg)
+            symtable.define(arg)
             trans_args.append(
                 f"{MAP_TYPE_STR[arg.type_]} %{registers[-1] + i}"
             )
@@ -143,7 +157,7 @@ class LLVMTranslator(BuilderTranslator):
 
         # note: `+ 1` is used here because the previous register is used
         # somewhere and the compiler will raise an error.
-        registers[-1] =+ len(prototype.args) + 1
+        registers[-1] = +len(prototype.args) + 1
 
         return (
             f"define {MAP_TYPE_STR[prototype.return_type]} "
@@ -153,17 +167,18 @@ class LLVMTranslator(BuilderTranslator):
         )
 
     def translate_function(self, fn: ast.Function) -> str:
-        systable.push_scope()
+        scope = symtable.scopes.add(f"function {fn.prototype.name}")
+        symtable.scopes.set_default_parent(scope)
         registers.append(0)
+
         prototype_result = self.translate_function_prototype(fn.prototype)
         body_result = self.translate_block(fn.body)
-        registers.pop()
 
-        return (
-            f"""{prototype_result} {{\n"""
-            f"""{body_result}\n"""
-            f"}}"
-        )
+        registers.pop()
+        symtable.scopes.set_default_parent(scope.parent)
+        symtable.scopes.destroy(scope)
+
+        return f"""{prototype_result} {{\n""" f"""{body_result}\n""" f"}}"
 
     def translate_return(self, ret: ast.Return) -> str:
         ret_tpl = "  ret {} %{}"
