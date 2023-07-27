@@ -11,7 +11,7 @@ from arxir import ast
 class BuilderTranslator:
     """Builder translator visitor."""
 
-    def translate(self, expr: ast.Expr) -> Union[str, Any]:
+    def translate(self, expr: ast.AST) -> Union[str, Any]:
         """
         Translate a arxir expression.
 
@@ -40,10 +40,10 @@ class Builder:
     def module(self) -> ast.Module:
         return ast.Module()
 
-    def compile(self, expr: ast.Expr) -> str:
+    def compile(self, expr: ast.AST) -> str:
         return self.translator.translate(expr)
 
-    def build(self, expr: ast.Expr, output_file: str) -> None:
+    def build(self, expr: ast.AST, output_file: str) -> None:
         result = self.compile(expr)
 
         with tempfile.NamedTemporaryFile(suffix="", delete=False) as temp_file:

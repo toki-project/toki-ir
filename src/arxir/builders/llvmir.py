@@ -1,4 +1,4 @@
-from typing import Dict, List, cast
+from typing import Any, Dict, List, cast
 
 from arxir import ast
 
@@ -15,13 +15,17 @@ MAP_TYPE_STR: Dict[ast.ExprType, str] = {
 }
 
 registers: List[int] = []
-registers_expr: Dict[int, int] = {}
+registers_expr: Dict[str, int] = {}
 
 symtable = SymbolTable()
 
 
+def strid(obj: Any) -> str:
+    return str(id(obj))
+
+
 class LLVMTranslator(BuilderTranslator):
-    def translate(self, expr: ast.Expr) -> str:
+    def translate(self, expr: ast.AST) -> str:
         """
         Translate the expression using the appropriated function.
 
@@ -98,8 +102,8 @@ class LLVMTranslator(BuilderTranslator):
         result += alloca_tpl.format(reg[-1], rhs_type)
 
         # store
-        reg_lhs = registers_expr[id(binop.lhs)]
-        reg_rhs = registers_expr[id(binop.rhs)]
+        reg_lhs = registers_expr[strid(binop.lhs)]
+        reg_rhs = registers_expr[strid(binop.rhs)]
         result += store_tpl.format(lhs_type, reg_lhs, lhs_type, reg[-1] - 1)
         result += store_tpl.format(rhs_type, reg_rhs, rhs_type, reg[-1])
 
@@ -115,7 +119,7 @@ class LLVMTranslator(BuilderTranslator):
             reg[-1], op_name, lhs_type, reg[-1] - 1, reg[-1] - 2
         )
 
-        registers_expr[id(binop)] = reg[-1]
+        registers_expr[strid(binop)] = reg[-1]
 
         return result
 
@@ -186,7 +190,7 @@ class LLVMTranslator(BuilderTranslator):
     def translate_return(self, ret: ast.Return) -> str:
         ret_tpl = "  ret {} %{}"
 
-        reg_n = registers_expr[id(ret.value)]
+        reg_n = registers_expr[strid(ret.value)]
         reg_tp = MAP_TYPE_STR[ret.value.type_]
         return ret_tpl.format(reg_tp, reg_n)
 

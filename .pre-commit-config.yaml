@@ -20,7 +20,7 @@ repos:
       name: mypy
       entry: mypy
       language: system
-      files: "src/arxir"
+      files: "."
       pass_filenames: true
       types:
         - python

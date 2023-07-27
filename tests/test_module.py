@@ -5,9 +5,9 @@ from arxir import ast
 
 
 @pytest.fixture
-def fn_expr() -> ast.Expr:
-    var_a = ast.Variable(name="a", type_=ast.Int32, value=1)
-    var_b = ast.Variable(name="b", type_=ast.Int32, value=2)
+def fn_expr() -> ast.AST:
+    var_a = ast.Variable(name="a", type_=ast.Int32, value=ast.Int32Literal(1))
+    var_b = ast.Variable(name="b", type_=ast.Int32, value=ast.Int32Literal(2))
 
     proto = ast.FunctionPrototype(
         name="add", args=[var_a, var_b], return_type=ast.Int32
