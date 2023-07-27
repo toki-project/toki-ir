@@ -1,5 +1,6 @@
 from arxir.builders import llvmir
 
+
 def test_add():
     builder = llvmir.LLVMIR()
     module = builder.module()
@@ -11,7 +12,7 @@ def test_add():
     x, y = builder.add_function_args(
         hello,
         [builder.F64, builder.F64],
-        ['a', 'b'],
+        ["a", "b"],
     )
 
     adder = builder.addf(x, y, builder.F64)

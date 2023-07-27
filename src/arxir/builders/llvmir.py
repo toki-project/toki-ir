@@ -1,12 +1,13 @@
-from typing import Any, Callable, Dict, List
+from typing import Dict, List, cast
 
 from arxir import ast
 
 
-from arxir.builders.base import Builder, BuilderTranslator, SymbolTable
+from arxir.builders.base import Builder, BuilderTranslator
+from arxir.builders.symbol_table import SymbolTable
 
 
-MAP_TYPE_STR = {
+MAP_TYPE_STR: Dict[ast.ExprType, str] = {
     ast.Int8: "i8",
     ast.Int16: "i16",
     ast.Int32: "i32",
@@ -30,23 +31,25 @@ class LLVMTranslator(BuilderTranslator):
         expr_type = type(expr)
 
         if expr_type is ast.BinaryOp:
-            return self.translate_binary_op(expr)
+            return self.translate_binary_op(cast(ast.BinaryOp, expr))
         if expr_type is ast.Block:
-            return self.translate_block(expr)
+            return self.translate_block(cast(ast.Block, expr))
         if expr_type is ast.Function:
-            return self.translate_function(expr)
+            return self.translate_function(cast(ast.Function, expr))
         if expr_type is ast.FunctionPrototype:
-            return self.translate_function_prototype(expr)
+            return self.translate_function_prototype(
+                cast(ast.FunctionPrototype, expr)
+            )
         if expr_type is ast.Module:
-            return self.translate_module(expr)
+            return self.translate_module(cast(ast.Module, expr))
         if expr_type is ast.Variable:
-            return self.translate_variable(expr)
+            return self.translate_variable(cast(ast.Variable, expr))
         if expr_type is ast.Return:
-            return self.translate_return(expr)
+            return self.translate_return(cast(ast.Return, expr))
 
         # datatypes
-        if expr_type is ast.Int32:
-            return self.translate_i32(expr)
+        if expr_type is ast.Int32Literal:
+            return self.translate_i32_literal(cast(ast.Int32Literal, expr))
 
         raise Exception(
             f"No translation was found for the given expression ({expr})."
@@ -138,7 +141,7 @@ class LLVMTranslator(BuilderTranslator):
             result += self.translate(expr) + "\n"
         return result
 
-    def translate_i32(self, i32: ast.Int32) -> str:
+    def translate_i32_literal(self, i32: ast.Int32Literal) -> str:
         return f"i32 {i32.value}"
 
     def translate_function_prototype(
@@ -188,7 +191,7 @@ class LLVMTranslator(BuilderTranslator):
         return ret_tpl.format(reg_tp, reg_n)
 
     def translate_variable(self, var: ast.Variable) -> str:
-        return "variable"
+        return f"variable {var.name}"
 
 
 class LLVMIR(Builder):

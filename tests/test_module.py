@@ -10,9 +10,7 @@ def fn_expr() -> ast.Expr:
     var_b = ast.Variable(name="b", type_=ast.Int32, value=2)
 
     proto = ast.FunctionPrototype(
-        name="add",
-        args=[var_a, var_b],
-        return_type=ast.Int32
+        name="add", args=[var_a, var_b], return_type=ast.Int32
     )
     # add_op = ast.BinaryOp(
     #     op_code="+", lhs=var_a, rhs=var_b
@@ -34,6 +32,7 @@ def test_module_compile(fn_expr: ast.Expr):
     print(ir_result)
     assert ir_result
     assert False
+
 
 def test_module_build(fn_expr: ast.Expr):
     builder = LLVMIR()
