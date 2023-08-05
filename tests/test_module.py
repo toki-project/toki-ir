@@ -5,40 +5,48 @@ from arxir import ast
 
 
 @pytest.fixture
-def fn_expr() -> ast.AST:
+def fn_add_expr() -> ast.AST:
     var_a = ast.Variable(name="a", type_=ast.Int32, value=ast.Int32Literal(1))
     var_b = ast.Variable(name="b", type_=ast.Int32, value=ast.Int32Literal(2))
 
     proto = ast.FunctionPrototype(
         name="add", args=[var_a, var_b], return_type=ast.Int32
     )
-    # add_op = ast.BinaryOp(
-    #     op_code="+", lhs=var_a, rhs=var_b
-    # )
     block = ast.Block()
     var_sum = var_a + var_b
-    block.append(var_sum)
     block.append(ast.Return(var_sum))
     return ast.Function(prototype=proto, body=block)
 
 
-def test_module_compile(fn_expr: ast.Expr):
+@pytest.fixture
+def fn_main_expr() -> ast.AST:
+    proto = ast.FunctionPrototype(name="main", args=[], return_type=ast.Int32)
+    block = ast.Block()
+    block.append(ast.Return(ast.Int32Literal(0)))
+    return ast.Function(prototype=proto, body=block)
+
+
+def test_module_compile(fn_main_expr: ast.AST, fn_add_expr: ast.AST):
     builder = LLVMIR()
 
     module = builder.module()
-    module.block.append(fn_expr)
+    module.block.append(fn_add_expr)
 
     ir_result = builder.compile(module)
     print(ir_result)
     assert ir_result
-    assert False
 
 
-def test_module_build(fn_expr: ast.Expr):
+def test_module_build(fn_main_expr: ast.AST, fn_add_expr: ast.AST):
     builder = LLVMIR()
 
     module = builder.module()
-    module.block.append(fn_expr)
+    module.block.append(fn_add_expr)
+    module.block.append(fn_main_expr)
+
+    ir_result = builder.compile(module)
+    print(ir_result)
+    assert ir_result
 
     builder.build(module, "/tmp/sum.exe")
     builder.run()

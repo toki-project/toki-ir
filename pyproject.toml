@@ -18,6 +18,7 @@ python = "^3.8.1"
 atpublic = "^4.0"
 astx = "^0.1.0"
 sh = "^2.0.4"
+typing-extensions = { version = "^4", python = "<3.9" }
 
 [tool.poetry.dev-dependencies]
 urllib3 = "<2"  # fix poetry issues

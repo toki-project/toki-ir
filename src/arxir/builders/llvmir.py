@@ -90,8 +90,8 @@ class LLVMTranslator(BuilderTranslator):
         reg = registers
 
         alloca_tpl = "  %{} = alloca {}, align 4\n"
-        store_tpl = "  store {} {}, {}* %{}, align 4\n"
-        load_tpl = "  ${} = load {}, {}* %{}, align 4\n"
+        store_tpl = "  store {} %{}, {}* %{}, align 4\n"
+        load_tpl = "  %{} = load {}, {}* %{}, align 4\n"
         op_tpl = "  %{} = {} {} %{}, %{}"
 
         result = ""
@@ -102,8 +102,8 @@ class LLVMTranslator(BuilderTranslator):
         result += alloca_tpl.format(reg[-1], rhs_type)
 
         # store
-        reg_lhs = registers_expr[strid(binop.lhs)]
-        reg_rhs = registers_expr[strid(binop.rhs)]
+        reg_lhs = binop.lhs.comment
+        reg_rhs = binop.rhs.comment
         result += store_tpl.format(lhs_type, reg_lhs, lhs_type, reg[-1] - 1)
         result += store_tpl.format(rhs_type, reg_rhs, rhs_type, reg[-1])
 
@@ -111,16 +111,24 @@ class LLVMTranslator(BuilderTranslator):
         reg[-1] += 1
         result += load_tpl.format(reg[-1], lhs_type, lhs_type, reg[-1] - 2)
         reg[-1] += 1
-        result += load_tpl.format(reg[-1], rhs_type, rhs_type, reg[-1] - 4)
+        result += load_tpl.format(reg[-1], rhs_type, rhs_type, reg[-1] - 2)
 
         # operation
         reg[-1] += 1
         result += op_tpl.format(
-            reg[-1], op_name, lhs_type, reg[-1] - 1, reg[-1] - 2
+            reg[-1], op_name, lhs_type, reg[-1] - 2, reg[-1] - 1
         )
 
-        registers_expr[strid(binop)] = reg[-1]
+        binop.comment = reg[-1]
+        symtable.define(binop)
 
+        return result
+
+    def translate_block(self, block: ast.Block) -> str:
+        result = ""
+
+        for expr in block:
+            result += self.translate(expr) + "\n"
         return result
 
     def translate_module(self, module: ast.Module) -> str:
@@ -138,15 +146,20 @@ class LLVMTranslator(BuilderTranslator):
             f"""target triple = "{module.target.triple}"\n"""
         ) + block_result
 
-    def translate_block(self, block: ast.Block) -> str:
-        result = ""
-
-        for expr in block:
-            result += self.translate(expr) + "\n"
-        return result
-
     def translate_i32_literal(self, i32: ast.Int32Literal) -> str:
-        return f"i32 {i32.value}"
+        registers[-1] += 1
+        reg_n = registers[-1]
+
+        result = (
+            "  %{0} = alloca i32, align 4\n"
+            "  store i32 0, i32* %{0}, align 4\n"
+            "  %{1} = load i32, i32* %{0}, align 4\n"
+        ).format(reg_n, reg_n + 1)
+        registers[-1] += 1
+
+        i32.comment = reg_n + 1
+
+        return result
 
     def translate_function_prototype(
         self, prototype: ast.FunctionPrototype
@@ -156,9 +169,8 @@ class LLVMTranslator(BuilderTranslator):
         trans_args = []
         for i, arg in enumerate(prototype.args):
             symtable.define(arg)
-            trans_args.append(
-                f"{MAP_TYPE_STR[arg.type_]} %{registers[-1] + i}"
-            )
+            arg.comment = str(registers[-1] + i)
+            trans_args.append(f"{MAP_TYPE_STR[arg.type_]} %{arg.comment}")
 
         args = ", ".join(trans_args)
 
@@ -190,9 +202,12 @@ class LLVMTranslator(BuilderTranslator):
     def translate_return(self, ret: ast.Return) -> str:
         ret_tpl = "  ret {} %{}"
 
-        reg_n = registers_expr[strid(ret.value)]
+        ret_value = self.translate(ret.value)
+
+        reg_n = ret.value.comment
+
         reg_tp = MAP_TYPE_STR[ret.value.type_]
-        return ret_tpl.format(reg_tp, reg_n)
+        return f"{ret_value}\n{ret_tpl.format(reg_tp, reg_n)}"
 
     def translate_variable(self, var: ast.Variable) -> str:
         return f"variable {var.name}"
