@@ -1,8 +1,10 @@
+import tempfile
+
 from typing import Any, Dict, List, cast
 
+import sh
+
 from arxir import ast
-
-
 from arxir.builders.base import Builder, BuilderTranslator
 from arxir.builders.symbol_table import SymbolTable
 
@@ -92,7 +94,7 @@ class LLVMTranslator(BuilderTranslator):
         alloca_tpl = "  %{} = alloca {}, align 4\n"
         store_tpl = "  store {} %{}, {}* %{}, align 4\n"
         load_tpl = "  %{} = load {}, {}* %{}, align 4\n"
-        op_tpl = "  %{} = {} {} %{}, %{}"
+        op_tpl = "  %{} = {} nsw {} %{}, %{}"
 
         result = ""
 
@@ -119,7 +121,7 @@ class LLVMTranslator(BuilderTranslator):
             reg[-1], op_name, lhs_type, reg[-1] - 2, reg[-1] - 1
         )
 
-        binop.comment = reg[-1]
+        binop.comment = str(reg[-1])
         symtable.define(binop)
 
         return result
@@ -141,9 +143,10 @@ class LLVMTranslator(BuilderTranslator):
         symtable.scopes.destroy(scope)
 
         return (
-            f"""; ModuleID = '{module.name}'\n"""
+            f"""; ModuleID = '{module.name}.arx'\n"""
+            f"""source_filename = "{module.name}.arx"\n"""
             f"""target datalayout = "{module.target.datalayout}"\n"""
-            f"""target triple = "{module.target.triple}"\n"""
+            f"""target triple = "{module.target.triple}"\n\n"""
         ) + block_result
 
     def translate_i32_literal(self, i32: ast.Int32Literal) -> str:
@@ -157,7 +160,7 @@ class LLVMTranslator(BuilderTranslator):
         ).format(reg_n, reg_n + 1)
         registers[-1] += 1
 
-        i32.comment = reg_n + 1
+        i32.comment = str(reg_n + 1)
 
         return result
 
@@ -170,16 +173,22 @@ class LLVMTranslator(BuilderTranslator):
         for i, arg in enumerate(prototype.args):
             symtable.define(arg)
             arg.comment = str(registers[-1] + i)
-            trans_args.append(f"{MAP_TYPE_STR[arg.type_]} %{arg.comment}")
+            trans_args.append(
+                f"{MAP_TYPE_STR[arg.type_]} noundef %{arg.comment}"
+            )
 
         args = ", ".join(trans_args)
 
         # note: `+ 1` is used here because the previous register is used
         # somewhere and the compiler will raise an error.
-        registers[-1] = +len(prototype.args) + 1
+        if prototype.args:
+            registers[-1] = len(prototype.args) + 1
+        else:
+            # note: this is an workaround
+            registers[-1] = 0
 
         return (
-            f"define {MAP_TYPE_STR[prototype.return_type]} "
+            f"define dso_local {MAP_TYPE_STR[prototype.return_type]} "
             f"{scope}{prototype.name}("
             f"{args}"
             ")"
@@ -215,4 +224,32 @@ class LLVMTranslator(BuilderTranslator):
 
 class LLVMIR(Builder):
     def __init__(self):
+        super().__init__()
         self.translator: BuilderTranslator = LLVMTranslator()
+
+    def build(self, expr: ast.AST, output_file: str) -> None:
+        result = self.compile(expr)
+
+        with tempfile.NamedTemporaryFile(suffix="", delete=False) as temp_file:
+            self.tmp_path = temp_file.name
+
+        file_path_ll = f"{self.tmp_path}.ll"
+        file_path_o = f"{self.tmp_path}.o"
+
+        with open(file_path_ll, "w") as f:
+            f.write(result)
+
+        sh.llc(
+            [
+                "-filetype=obj",
+                file_path_ll,
+                "-o",
+                file_path_o,
+            ],
+            **self.sh_args,
+        )
+        self.output_file = output_file
+        sh.clang([file_path_o, "-o", self.output_file], **self.sh_args)
+
+    def run(self) -> None:
+        sh([self.output_file])

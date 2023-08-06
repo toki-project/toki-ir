@@ -1,9 +1,11 @@
 """Define the public arxir API."""
 from __future__ import annotations
-import tempfile
-from typing import Any, Union
 
-import sh
+import os
+import sys
+
+from abc import ABC, abstractmethod
+from typing import Any, Dict, Union
 
 from arxir import ast
 
@@ -25,17 +27,26 @@ class BuilderTranslator:
         """
 
 
-class Builder:
+class Builder(ABC):
     """Backend protocol."""
 
     translator: BuilderTranslator
     tmp_path: str
     output_file: str
 
+    sh_args: Dict[str, Any]
+
     def __init__(self) -> None:
         self.translator = BuilderTranslator()
         self.tmp_path = ""
         self.output_file = ""
+        self.sh_args: Dict[str, Any] = dict(
+            _in=sys.stdin,
+            _out=sys.stdout,
+            _err=sys.stderr,
+            _env=os.environ,
+            # _new_session=True,
+        )
 
     def module(self) -> ast.Module:
         return ast.Module()
@@ -43,25 +54,10 @@ class Builder:
     def compile(self, expr: ast.AST) -> str:
         return self.translator.translate(expr)
 
+    @abstractmethod
     def build(self, expr: ast.AST, output_file: str) -> None:
-        result = self.compile(expr)
+        ...
 
-        with tempfile.NamedTemporaryFile(suffix="", delete=False) as temp_file:
-            self.tmp_path = temp_file.name
-
-        with open(f"{self.tmp_path}.ll", "w") as f:
-            f.write(result)
-
-        # llc -filetype=obj hello-world.ll -o hello-world.o
-        sh.llc(
-            [
-                "-filetype=obj",
-                f"{self.tmp_path}.ll",
-                "-o",
-                f"{self.tmp_path}.o",
-            ]
-        )
-        self.output_file = output_file
-
+    @abstractmethod
     def run(self) -> None:
-        sh.clang([f"{self.tmp_path}.o", "-o", self.output_file])
+        ...
