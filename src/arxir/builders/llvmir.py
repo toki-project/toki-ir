@@ -60,8 +60,9 @@ class LLVMTranslator(BuilderTranslator):
         )
 
     def translate_binary_op(self, binop: ast.BinaryOp) -> str:
-        lhs = self.translate(binop.lhs)
-        rhs = self.translate(binop.rhs)
+        # note: need to check if it is needed to be handle in some way
+        self.translate(binop.lhs)
+        self.translate(binop.rhs)
 
         lhs_type = MAP_TYPE_STR[binop.lhs.type_]
         rhs_type = MAP_TYPE_STR[binop.rhs.type_]
