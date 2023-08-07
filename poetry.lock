@@ -13,17 +13,18 @@ files = [
 
 [[package]]
 name = "astx"
-version = "0.1.0"
+version = "0.2.0"
 description = "OSL Python Package contains all the boilerplate you need to create a Python package."
 optional = false
 python-versions = ">=3.8.1,<4.0.0"
 files = [
-    {file = "astx-0.1.0-py3-none-any.whl", hash = "sha256:060fc41c0270d6ee49c9a6d1f48476aa59097b10e7b155bf10deb880105c764c"},
-    {file = "astx-0.1.0.tar.gz", hash = "sha256:952c30a79a0c41ce32b3d004c262b181e80452d6e927d7724b00fc6143b1c957"},
+    {file = "astx-0.2.0-py3-none-any.whl", hash = "sha256:44d04565987cb11de3d875a730f9ccda56b4014a9c90f97d81ae15a81475140f"},
+    {file = "astx-0.2.0.tar.gz", hash = "sha256:43ab22e8a29c2853a1c24e25649c44b061add8ee55eab6f232d272de013bae56"},
 ]
 
 [package.dependencies]
 atpublic = ">=4.0,<5.0"
+typing-extensions = {version = ">=4,<5", markers = "python_version < \"3.9\""}
 
 [[package]]
 name = "atpublic"
@@ -1299,17 +1300,17 @@ python-legacy = ["mkdocstrings-python-legacy (>=0.2.1)"]
 
 [[package]]
 name = "mkdocstrings-python"
-version = "1.2.1"
+version = "1.3.0"
 description = "A Python handler for mkdocstrings."
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "mkdocstrings_python-1.2.1-py3-none-any.whl", hash = "sha256:7c08f33e9ba7b1655e9cf0608eba3ce7a9513bd8b42a68a8d24ffaf4a6a50cfc"},
-    {file = "mkdocstrings_python-1.2.1.tar.gz", hash = "sha256:ae40825b3b676a94626882901ed9c8fcf9a7f0330e466ffe37ce15c525987aa9"},
+    {file = "mkdocstrings_python-1.3.0-py3-none-any.whl", hash = "sha256:36c224c86ab77e90e0edfc9fea3307f7d0d245dd7c28f48bbb2203cf6e125530"},
+    {file = "mkdocstrings_python-1.3.0.tar.gz", hash = "sha256:f967f84bab530fcc13cc9c02eccf0c18bdb2c3bab5c55fa2045938681eec4fc4"},
 ]
 
 [package.dependencies]
-griffe = ">=0.30"
+griffe = ">=0.30,<0.33"
 mkdocstrings = ">=0.20"
 
 [[package]]
@@ -1682,13 +1683,13 @@ files = [
 
 [[package]]
 name = "pygments"
-version = "2.15.1"
+version = "2.16.1"
 description = "Pygments is a syntax highlighting package written in Python."
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "Pygments-2.15.1-py3-none-any.whl", hash = "sha256:db2db3deb4b4179f399a09054b023b6a586b76499d36965813c71aa8ed7b5fd1"},
-    {file = "Pygments-2.15.1.tar.gz", hash = "sha256:8ace4d3c1dd481894b2005f560ead0f9f19ee64fe983366be1a21e171d12775c"},
+    {file = "Pygments-2.16.1-py3-none-any.whl", hash = "sha256:13fc09fa63bc8d8671a6d247e1eb303c4b343eaee81d861f3404db2935653692"},
+    {file = "Pygments-2.16.1.tar.gz", hash = "sha256:1daff0494820c69bc8941e407aa20f577374ee88364ee10a98fdbe0aece96e29"},
 ]
 
 [package.extras]
@@ -1954,13 +1955,13 @@ cffi = {version = "*", markers = "implementation_name == \"pypy\""}
 
 [[package]]
 name = "referencing"
-version = "0.30.1"
+version = "0.30.2"
 description = "JSON Referencing + Python"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "referencing-0.30.1-py3-none-any.whl", hash = "sha256:185d4a29f001c6e8ae4dad3861e61282a81cb01b9f0ef70a15450c45c6513a0d"},
-    {file = "referencing-0.30.1.tar.gz", hash = "sha256:9370c77ceefd39510d70948bbe7375ce2d0125b9c11fd380671d4de959a8e3ce"},
+    {file = "referencing-0.30.2-py3-none-any.whl", hash = "sha256:449b6669b6121a9e96a7f9e410b245d471e8d48964c67113ce9afe50c8dd7bdf"},
+    {file = "referencing-0.30.2.tar.gz", hash = "sha256:794ad8003c65938edcdbc027f1933215e0d0ccc0291e3ce20a4d87432b59efc0"},
 ]
 
 [package.dependencies]
@@ -2565,4 +2566,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.8.1"
-content-hash = "66ec06eed8b914dd2176f1d22d4ecc748da33468967e2c88869668aecc7b3013"
+content-hash = "7a4f48111baf3572e4f01204c07b98a16a20ff723706521c88dad178b9180556"
