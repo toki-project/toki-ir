@@ -1,35 +1,21 @@
 # Arx-IR
 
-OSL Python Package contains all the boilerplate you need to create a Python package.
+**Arx-IR** aims to provide a translator to LLVM-IR and other IR languages
+from [**ASTx**](https://github.com/arxlang/astx) objects.
+
+**ASTx** is a generic project that offers a way to compound in an
+expressive way an **AST**. It is not specific for the **ArxLang** project,
+although it is main focus is to provide all needed feature for it.
+
+**Arx-IR** does not use any **LLVM-IR** dependency to create the **LLVM-IR** source,
+in another words, it creates all **LLVM-IR** source from scratch.
+**Arx-IR** just uses `clang` and `llc` as dependencies in order to compile
+the generated **LLVM-IR** source to binary files.
 
 * Free software: BSD 3 Clause
-* Documentation: https://arx-ir.readthedocs.io.
+* Documentation: https://arxlang.github.io/arx-ir.
 
 ## Features
 
-* The security of our code: Bandit is a powerful tool that we use in our Python
-  project to ensure its security. This tool analyzes the code and detects
-  potential vulnerabilities. Some of the key features of Bandit are its ease of
-  use, its ability to integrate with other tools, and its support for multiple
-  Python versions. If you want to know about bandit you can check its
-  [documentation](https://bandit.readthedocs.io/en/latest/).
-
-* Finds unused code: [Vulture](https://github.com/jendrikseipp/vulture)
-  is useful for cleaning up and finding errors in large code bases in
-  Python.
-
-* Complexity of functions and modules: We use
-[McCabe](https://github.com/PyCQA/mccabe) to identify the complexity in our
-Python code that may be difficult to maintain or understand. By identifying
-complex code at the outset, we as developers can refactor it to make it easier
-to maintain and understand. In summary, McCabe helps us to improve the quality
-of our code and make it easier to maintain. If you would like to learn more
-about McCabe and code complexity, you can visit [McCabe - Code Complexity
-Checker](https://here-be-pythons.readthedocs.io/en/latest/python/mccabe.html).
-This tool is included with [Flake8](https://flake8.pycqa.org/en/latest/).
-
-* TODO
-
-## Credits
-
-This package was created with Cookieninja and the `osl-incubator/scicookie` project template.
+* Generate **LLVM-IR** from **ASTx**
+* Compile **LLVM-IR** to binary files using `clang` and `llc`

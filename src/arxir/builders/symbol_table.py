@@ -1,23 +1,36 @@
+from typing import List
+
 from public import public
+from astx.symbol_table import SymbolTable
 
-from astx.symbol_table import (
-    SymbolTable as SymbolTableBase,
-    ScopeNodeBase,
-    Scope as ScopeBase,
-)
+
+__all__ = ["SymbolTable"]
 
 
 @public
-class ScopeNode(ScopeNodeBase):
-    ...
+class RegisterTable:
+    # each level in the stack represents a context
+    stack: List[int]
 
+    def __init__(self) -> None:
+        self.stack: List[int] = []
 
-@public
-class Scope(ScopeBase):
-    ...
+    def append(self) -> None:
+        self.stack.append(0)
 
+    def increase(self, count: int = 1) -> int:
+        self.stack[-1] += count
+        return count
 
-@public
-class SymbolTable(SymbolTableBase):
-    def __init__(self):
-        self.scopes = Scope()
+    @property
+    def last(self) -> int:
+        return self.stack[-1]
+
+    def pop(self) -> None:
+        self.stack.pop()
+
+    def redefine(self, count: int) -> None:
+        self.stack[-1] = count
+
+    def reset(self) -> None:
+        self.stack[-1] = 0
