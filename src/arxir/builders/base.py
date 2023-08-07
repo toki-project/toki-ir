@@ -55,7 +55,7 @@ class Builder(ABC):
         return self.translator.translate(expr)
 
     @abstractmethod
-    def build(self, expr: ast.AST, output_file: str) -> None:
+    def build(self, expr: ast.AST, output_file: str) -> None:  # noqa: F841
         ...
 
     @abstractmethod
