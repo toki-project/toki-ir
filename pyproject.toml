@@ -20,7 +20,7 @@ astx = "^0.2.0"
 sh = "^2.0.4"
 typing-extensions = { version = "^4", python = "<3.9" }
 
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.dev.dependencies]
 urllib3 = "<2"  # fix poetry issues
 pytest = "^7.3.2"
 pytest-cov = "^4.1.0"
@@ -42,8 +42,6 @@ mkdocs-macros-plugin = ">=0.7.0,<1"
 mkdocs-material = "^9.1.15"
 mkdocstrings = "^0.21.2"
 mkdocstrings-python = "^1.1.2"
-
-[tool.poetry.group.dev.dependencies]
 makim = "1.8.2"
 
 [tool.pytest.ini_options]
