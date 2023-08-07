@@ -20,7 +20,7 @@ repos:
       name: mypy
       entry: mypy
       language: system
-      files: "src/arxir"
+      files: "."
       pass_filenames: true
       types:
         - python
@@ -49,7 +49,7 @@ repos:
 
     - id: vulture
       name: vulture
-      entry: vulture
+      entry: vulture --min-confidence 80
       language: system
       files: "src/arxir"
       description: Find unused Python code.

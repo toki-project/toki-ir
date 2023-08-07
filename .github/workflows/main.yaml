@@ -7,7 +7,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     concurrency:
-      group: ci-${{ github.ref }}
+      group: main-${{ github.ref }}
       cancel-in-progress: true
 
     defaults:
@@ -22,6 +22,7 @@ jobs:
         mamba-version: "1.*"
         environment-file: conda/dev.yaml
         channels: conda-forge,nodefaults
+        channel-priority: true
         activate-environment: arx-ir
         use-mamba: true
         miniforge-variant: Mambaforge
@@ -30,9 +31,7 @@ jobs:
       run: poetry install
 
     - name: Run tests
-      run: make test
+      run: makim tests.unittest
 
     - name: Run style checks
-      run: |
-        pre-commit install
-        make lint
+      run: makim tests.linter

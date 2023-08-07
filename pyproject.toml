@@ -11,11 +11,16 @@ exclude = [
 packages = [
   {include = "arxir", from="src"},
 ]
+include = ["src/arxir/py.typed"]
 
 [tool.poetry.dependencies]
 python = "^3.8.1"
+atpublic = "^4.0"
+astx = "^0.2.0"
+sh = "^2.0.4"
+typing-extensions = { version = "^4", python = "<3.9" }
 
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.dev.dependencies]
 urllib3 = "<2"  # fix poetry issues
 pytest = "^7.3.2"
 pytest-cov = "^4.1.0"
@@ -29,7 +34,6 @@ vulture = "^2.7"
 mccabe = "^0.6.1"
 ipython = "<8"
 ipykernel = ">=6.0.0"
-Jinja2 = "^3.1.2"
 mkdocs = "^1.4.3"
 mkdocs-exclude = "^1.0.2"
 mkdocs-jupyter = "^0.24.1"
@@ -38,6 +42,7 @@ mkdocs-macros-plugin = ">=0.7.0,<1"
 mkdocs-material = "^9.1.15"
 mkdocstrings = "^0.21.2"
 mkdocstrings-python = "^1.1.2"
+makim = "1.8.2"
 
 [tool.pytest.ini_options]
 testpaths = [
@@ -82,3 +87,9 @@ convention = "numpy"
 
 [tool.mypy]
 no_strict_optional = false
+
+[[tool.mypy.overrides]]
+module = [
+  "sh",
+]
+ignore_missing_imports = true
