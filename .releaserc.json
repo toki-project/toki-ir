@@ -1,5 +1,3 @@
-
-
 {
   "branches": ["main"],
   "tagFormat": "${version}",
@@ -10,12 +8,12 @@
       {
         "replacements": [
           {
-            "files": ["{{ cookiecutter.package_slug }}/src/__init__.py"],
-            "from": "return '.*'  # semantic-release",
-            "to": "return '${nextRelease.version}'  # semantic-release",
+            "files": ["src/arxir/__init__.py"],
+            "from": "__version__ = \".*\"  # semantic-release",
+            "to": "__version__ = \"${nextRelease.version}\"  # semantic-release",
             "results": [
               {
-                "file": "{{ cookiecutter.package_slug }}/src/__init__.py",
+                "file": "src/arxir/__init__.py",
                 "hasChanged": true,
                 "numMatches": 1,
                 "numReplacements": 1
