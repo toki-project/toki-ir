@@ -1,12 +1,12 @@
 import tempfile
 
-from typing import Any, Dict, List, cast
+from typing import Any, Dict, cast
 
 import sh
 
 from arxir import ast
 from arxir.builders.base import Builder, BuilderTranslator
-from arxir.builders.symbol_table import SymbolTable
+from arxir.builders.symbol_table import RegisterTable, SymbolTable
 
 
 MAP_TYPE_STR: Dict[ast.ExprType, str] = {
@@ -16,9 +16,7 @@ MAP_TYPE_STR: Dict[ast.ExprType, str] = {
     ast.Int64: "i64",
 }
 
-registers: List[int] = []
-registers_expr: Dict[str, int] = {}
-
+regtable = RegisterTable()
 symtable = SymbolTable()
 
 
@@ -85,11 +83,7 @@ class LLVMTranslator(BuilderTranslator):
         if not op_name:
             raise Exception("The given binary operator is not valid.")
 
-        # TODO: change the operation to `nsw` with if any element of the
-        #       operation is a poison value.
-
-        # alias
-        reg = registers
+        reg = regtable
 
         alloca_tpl = "  %{} = alloca {}, align 4\n"
         store_tpl = "  store {} %{}, {}* %{}, align 4\n"
@@ -99,29 +93,29 @@ class LLVMTranslator(BuilderTranslator):
         result = ""
 
         # alloca
-        result += alloca_tpl.format(reg[-1], lhs_type)
-        reg[-1] += 1
-        result += alloca_tpl.format(reg[-1], rhs_type)
+        result += alloca_tpl.format(reg.last, lhs_type)
+        reg.increase()
+        result += alloca_tpl.format(reg.last, rhs_type)
 
         # store
         reg_lhs = binop.lhs.comment
         reg_rhs = binop.rhs.comment
-        result += store_tpl.format(lhs_type, reg_lhs, lhs_type, reg[-1] - 1)
-        result += store_tpl.format(rhs_type, reg_rhs, rhs_type, reg[-1])
+        result += store_tpl.format(lhs_type, reg_lhs, lhs_type, reg.last - 1)
+        result += store_tpl.format(rhs_type, reg_rhs, rhs_type, reg.last)
 
         # load
-        reg[-1] += 1
-        result += load_tpl.format(reg[-1], lhs_type, lhs_type, reg[-1] - 2)
-        reg[-1] += 1
-        result += load_tpl.format(reg[-1], rhs_type, rhs_type, reg[-1] - 2)
+        reg.increase()
+        result += load_tpl.format(reg.last, lhs_type, lhs_type, reg.last - 2)
+        reg.increase()
+        result += load_tpl.format(reg.last, rhs_type, rhs_type, reg.last - 2)
 
         # operation
-        reg[-1] += 1
+        reg.increase()
         result += op_tpl.format(
-            reg[-1], op_name, lhs_type, reg[-1] - 2, reg[-1] - 1
+            reg.last, op_name, lhs_type, reg.last - 2, reg.last - 1
         )
 
-        binop.comment = str(reg[-1])
+        binop.comment = str(reg.last)
         symtable.define(binop)
 
         return result
@@ -150,17 +144,16 @@ class LLVMTranslator(BuilderTranslator):
         ) + block_result
 
     def translate_i32_literal(self, i32: ast.Int32Literal) -> str:
-        registers[-1] += 1
-        reg_n = registers[-1]
+        regtable.increase()
 
         result = (
             "  %{0} = alloca i32, align 4\n"
             "  store i32 0, i32* %{0}, align 4\n"
             "  %{1} = load i32, i32* %{0}, align 4\n"
-        ).format(reg_n, reg_n + 1)
-        registers[-1] += 1
+        ).format(regtable.last, regtable.last + 1)
+        regtable.increase()
 
-        i32.comment = str(reg_n + 1)
+        i32.comment = str(regtable.last)
 
         return result
 
@@ -172,7 +165,7 @@ class LLVMTranslator(BuilderTranslator):
         trans_args = []
         for i, arg in enumerate(prototype.args):
             symtable.define(arg)
-            arg.comment = str(registers[-1] + i)
+            arg.comment = str(regtable.last + i)
             trans_args.append(
                 f"{MAP_TYPE_STR[arg.type_]} noundef %{arg.comment}"
             )
@@ -182,10 +175,9 @@ class LLVMTranslator(BuilderTranslator):
         # note: `+ 1` is used here because the previous register is used
         # somewhere and the compiler will raise an error.
         if prototype.args:
-            registers[-1] = len(prototype.args) + 1
+            regtable.redefine(len(prototype.args) + 1)
         else:
-            # note: this is an workaround
-            registers[-1] = 0
+            regtable.reset()
 
         return (
             f"define dso_local {MAP_TYPE_STR[prototype.return_type]} "
@@ -197,12 +189,12 @@ class LLVMTranslator(BuilderTranslator):
     def translate_function(self, fn: ast.Function) -> str:
         scope = symtable.scopes.add(f"function {fn.prototype.name}")
         symtable.scopes.set_default_parent(scope)
-        registers.append(0)
+        regtable.append()
 
         prototype_result = self.translate_function_prototype(fn.prototype)
         body_result = self.translate_block(fn.body)
 
-        registers.pop()
+        regtable.pop()
         symtable.scopes.set_default_parent(scope.parent)
         symtable.scopes.destroy(scope)
 
