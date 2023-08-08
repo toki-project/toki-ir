@@ -1,5 +1,4 @@
 import tempfile
-
 from typing import Any, Dict, cast
 
 import sh
@@ -7,7 +6,6 @@ import sh
 from arxir import ast
 from arxir.builders.base import Builder, BuilderTranslator
 from arxir.builders.symbol_table import RegisterTable, SymbolTable
-
 
 MAP_TYPE_STR: Dict[ast.ExprType, str] = {
     ast.Int8: "i8",
