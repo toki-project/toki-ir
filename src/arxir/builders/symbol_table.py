@@ -1,8 +1,7 @@
 from typing import List
 
-from public import public
 from astx.symbol_table import SymbolTable
-
+from public import public
 
 __all__ = ["SymbolTable"]
 

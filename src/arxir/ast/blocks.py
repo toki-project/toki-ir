@@ -3,7 +3,8 @@ from __future__ import annotations
 import copy
 
 from astx.base import Expr
-from astx.blocks import Block, Module as ModuleBase
+from astx.blocks import Block
+from astx.blocks import Module as ModuleBase
 
 
 class Target(Expr):

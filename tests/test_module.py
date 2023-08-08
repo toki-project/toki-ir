@@ -1,7 +1,6 @@
 import pytest
-
-from arxir.builders.llvmir import LLVMIR
 from arxir import ast
+from arxir.builders.llvmir import LLVMIR
 
 
 @pytest.fixture
