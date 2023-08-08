@@ -1,5 +1,5 @@
 import tempfile
-from typing import Any, Dict, cast
+from typing import Dict, cast
 
 import sh
 
@@ -14,15 +14,25 @@ MAP_TYPE_STR: Dict[ast.ExprType, str] = {
     ast.Int64: "i64",
 }
 
-regtable = RegisterTable()
-symtable = SymbolTable()
-
-
-def strid(obj: Any) -> str:
-    return str(id(obj))
-
 
 class LLVMTranslator(BuilderTranslator):
+    """LLVM-IR Translator"""
+
+    regtable: RegisterTable
+    symtable: SymbolTable
+    n_branches: int
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.regtable = RegisterTable()
+        self.symtable = SymbolTable()
+        self.n_branches = 0
+
+    def reset(self) -> None:
+        self.regtable = RegisterTable()
+        self.symtable = SymbolTable()
+        self.n_branches = 0
+
     def translate(self, expr: ast.AST) -> str:
         """
         Translate the expression using the appropriated function.
@@ -82,7 +92,7 @@ class LLVMTranslator(BuilderTranslator):
         if not op_name:
             raise Exception("The given binary operator is not valid.")
 
-        reg = regtable
+        reg = self.regtable
 
         alloca_tpl = "  %{} = alloca {}, align 4\n"
         store_tpl = "  store {} %{}, {}* %{}, align 4\n"
@@ -115,7 +125,7 @@ class LLVMTranslator(BuilderTranslator):
         )
 
         binop.comment = str(reg.last)
-        symtable.define(binop)
+        self.symtable.define(binop)
 
         return result
 
@@ -127,13 +137,13 @@ class LLVMTranslator(BuilderTranslator):
         return result
 
     def translate_module(self, module: ast.Module) -> str:
-        scope = symtable.scopes.add(f"module {module.name}")
-        symtable.scopes.set_default_parent(scope)
+        scope = self.symtable.scopes.add(f"module {module.name}")
+        self.symtable.scopes.set_default_parent(scope)
 
         block_result = self.translate_block(module.block)
 
-        symtable.scopes.set_default_parent(scope.parent)
-        symtable.scopes.destroy(scope)
+        self.symtable.scopes.set_default_parent(scope.parent)
+        self.symtable.scopes.destroy(scope)
 
         return (
             f"""; ModuleID = '{module.name}.arx'\n"""
@@ -143,16 +153,16 @@ class LLVMTranslator(BuilderTranslator):
         ) + block_result
 
     def translate_i32_literal(self, i32: ast.Int32Literal) -> str:
-        regtable.increase()
+        self.regtable.increase()
 
         result = (
             "  %{0} = alloca i32, align 4\n"
             "  store i32 0, i32* %{0}, align 4\n"
             "  %{1} = load i32, i32* %{0}, align 4\n"
-        ).format(regtable.last, regtable.last + 1)
-        regtable.increase()
+        ).format(self.regtable.last, self.regtable.last + 1)
+        self.regtable.increase()
 
-        i32.comment = str(regtable.last)
+        i32.comment = str(self.regtable.last)
 
         return result
 
@@ -163,8 +173,8 @@ class LLVMTranslator(BuilderTranslator):
 
         trans_args = []
         for i, arg in enumerate(prototype.args):
-            symtable.define(arg)
-            arg.comment = str(regtable.last + i)
+            self.symtable.define(arg)
+            arg.comment = str(self.regtable.last + i)
             trans_args.append(
                 f"{MAP_TYPE_STR[arg.type_]} noundef %{arg.comment}"
             )
@@ -174,9 +184,9 @@ class LLVMTranslator(BuilderTranslator):
         # note: `+ 1` is used here because the previous register is used
         # somewhere and the compiler will raise an error.
         if prototype.args:
-            regtable.redefine(len(prototype.args) + 1)
+            self.regtable.redefine(len(prototype.args) + 1)
         else:
-            regtable.reset()
+            self.regtable.reset()
 
         return (
             f"define dso_local {MAP_TYPE_STR[prototype.return_type]} "
@@ -186,16 +196,16 @@ class LLVMTranslator(BuilderTranslator):
         )
 
     def translate_function(self, fn: ast.Function) -> str:
-        scope = symtable.scopes.add(f"function {fn.prototype.name}")
-        symtable.scopes.set_default_parent(scope)
-        regtable.append()
+        scope = self.symtable.scopes.add(f"function {fn.prototype.name}")
+        self.symtable.scopes.set_default_parent(scope)
+        self.regtable.append()
 
         prototype_result = self.translate_function_prototype(fn.prototype)
         body_result = self.translate_block(fn.body)
 
-        regtable.pop()
-        symtable.scopes.set_default_parent(scope.parent)
-        symtable.scopes.destroy(scope)
+        self.regtable.pop()
+        self.symtable.scopes.set_default_parent(scope.parent)
+        self.symtable.scopes.destroy(scope)
 
         return f"""{prototype_result} {{\n""" f"""{body_result}\n""" f"}}"
 
