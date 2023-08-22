@@ -16,7 +16,7 @@ include = ["src/arxir/py.typed"]
 [tool.poetry.dependencies]
 python = "^3.8.1"
 atpublic = "^4.0"
-astx = "^0.2.1"
+astx = ">=0.3.2"
 sh = "^2.0.4"
 typing-extensions = { version = "^4", python = "<3.9" }
 
@@ -79,8 +79,13 @@ exclude = [
   'docs',
 ]
 select = [
-  "F",  # pyflakes
-  "I001",  # isort
+  "E",   # pycodestyle
+  "F",   # pyflakes
+  "D",   # pydocstyle
+  "YTT", # flake8-2020
+  "PL",  # PL
+  "RUF", # Ruff-specific rules
+  "I001", # isort
 ]
 fixable = ["I001"]
 
@@ -92,7 +97,14 @@ convention = "numpy"
 lines-between-types = 1
 
 [tool.mypy]
-no_strict_optional = false
+python_version = "3.8"
+check_untyped_defs = true
+strict = true
+ignore_missing_imports = true
+warn_unused_ignores = true
+warn_redundant_casts = true
+warn_unused_configs = true
+
 
 [[tool.mypy.overrides]]
 module = [
