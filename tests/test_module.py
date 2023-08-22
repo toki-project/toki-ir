@@ -1,4 +1,5 @@
 import pytest
+
 from arxir import ast
 from arxir.builders.llvmir import LLVMIR
 
