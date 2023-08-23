@@ -1,14 +1,16 @@
+"""Test For Loop statements."""
 import tempfile
 
 from arxir import ast
 from arxir.builders.llvmir import LLVMIR
 
 
-def test_for_range():
+def test_for_range() -> None:
+    """Test For Range statement."""
     builder = LLVMIR()
 
-    # for
-    var_a = ast.Variable("a", type_=ast.Int32, value=-1)
+    # `for` statement
+    var_a = ast.Variable("a", type_=ast.Int32, value=ast.Int32Literal(-1))
     start = ast.Int32Literal(1)
     end = ast.Int32Literal(10)
     step = ast.Int32Literal(1)
@@ -34,11 +36,12 @@ def test_for_range():
         builder.build(module, output_file=fp.name)
 
 
-def test_for_count():
+def test_for_count() -> None:
+    """Test the For Count statement."""
     builder = LLVMIR()
 
     # for
-    var_a = ast.Variable("a", type_=ast.Int32, value=0)
+    var_a = ast.Variable("a", type_=ast.Int32, value=ast.Int32Literal(0))
     cond = ast.BinaryOp(op_code="<", lhs=var_a, rhs=ast.Int32Literal(10))
     update = ast.UnaryOp(op_code="++", operand=var_a)
     body = ast.Block()

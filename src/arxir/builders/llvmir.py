@@ -1,3 +1,4 @@
+"""LLVM-IR builder."""
 import tempfile
 
 from typing import Dict, cast
@@ -17,24 +18,26 @@ MAP_TYPE_STR: Dict[ast.ExprType, str] = {
 
 
 class LLVMTranslator(BuilderTranslator):
-    """LLVM-IR Translator"""
+    """LLVM-IR Translator."""
 
     regtable: RegisterTable
     symtable: SymbolTable
     n_branches: int
 
     def __init__(self) -> None:
+        """Initialize LLVMTranslator object."""
         super().__init__()
         self.regtable = RegisterTable()
         self.symtable = SymbolTable()
         self.n_branches = 0
 
     def reset(self) -> None:
+        """Reset the LLVMTranslator state."""
         self.regtable = RegisterTable()
         self.symtable = SymbolTable()
         self.n_branches = 0
 
-    def translate(self, expr: ast.AST) -> str:
+    def translate(self, expr: ast.AST) -> str:  # noqa: PLR0911
         """
         Translate the expression using the appropriated function.
 
@@ -69,6 +72,7 @@ class LLVMTranslator(BuilderTranslator):
         )
 
     def translate_binary_op(self, binop: ast.BinaryOp) -> str:
+        """Translate ASTx Binary Operation to LLVM-IR."""
         # note: need to check if it is needed to be handle in some way
         self.translate(binop.lhs)
         self.translate(binop.rhs)
@@ -131,6 +135,7 @@ class LLVMTranslator(BuilderTranslator):
         return result
 
     def translate_block(self, block: ast.Block) -> str:
+        """Translate ASTx Block to LLVM-IR."""
         result = ""
 
         for expr in block:
@@ -138,12 +143,14 @@ class LLVMTranslator(BuilderTranslator):
         return result
 
     def translate_module(self, module: ast.Module) -> str:
+        """Translate ASTx Module to LLVM-IR."""
         scope = self.symtable.scopes.add(f"module {module.name}")
         self.symtable.scopes.set_default_parent(scope)
 
         block_result = self.translate_block(module.block)
 
-        self.symtable.scopes.set_default_parent(scope.parent)
+        if scope.parent:
+            self.symtable.scopes.set_default_parent(scope.parent)
         self.symtable.scopes.destroy(scope)
 
         return (
@@ -154,6 +161,7 @@ class LLVMTranslator(BuilderTranslator):
         ) + block_result
 
     def translate_i32_literal(self, i32: ast.Int32Literal) -> str:
+        """Translate ASTx Int32Literal to LLVM-IR."""
         self.regtable.increase()
 
         result = (
@@ -170,6 +178,7 @@ class LLVMTranslator(BuilderTranslator):
     def translate_function_prototype(
         self, prototype: ast.FunctionPrototype
     ) -> str:
+        """Translate ASTx Function Prototype to LLVM-IR."""
         scope = "@" if prototype.scope == ast.ScopeKind.global_ else "%"
 
         trans_args = []
@@ -197,6 +206,7 @@ class LLVMTranslator(BuilderTranslator):
         )
 
     def translate_function(self, fn: ast.Function) -> str:
+        """Translate ASTx Function to LLVM-IR."""
         scope = self.symtable.scopes.add(f"function {fn.prototype.name}")
         self.symtable.scopes.set_default_parent(scope)
         self.regtable.append()
@@ -205,12 +215,14 @@ class LLVMTranslator(BuilderTranslator):
         body_result = self.translate_block(fn.body)
 
         self.regtable.pop()
-        self.symtable.scopes.set_default_parent(scope.parent)
+        if scope.parent:
+            self.symtable.scopes.set_default_parent(scope.parent)
         self.symtable.scopes.destroy(scope)
 
         return f"""{prototype_result} {{\n""" f"""{body_result}\n""" f"}}"
 
     def translate_return(self, ret: ast.Return) -> str:
+        """Translate ASTx Return to LLVM-IR."""
         ret_tpl = "  ret {} %{}"
 
         ret_value = self.translate(ret.value)
@@ -221,15 +233,20 @@ class LLVMTranslator(BuilderTranslator):
         return f"{ret_value}\n{ret_tpl.format(reg_tp, reg_n)}"
 
     def translate_variable(self, var: ast.Variable) -> str:
+        """Translate ASTx Variable to LLVM-IR."""
         return f"variable {var.name}"
 
 
 class LLVMIR(Builder):
-    def __init__(self):
+    """LLVM-IR transpiler and compiler."""
+
+    def __init__(self) -> None:
+        """Initialize LLVMIR."""
         super().__init__()
         self.translator: BuilderTranslator = LLVMTranslator()
 
     def build(self, expr: ast.AST, output_file: str) -> None:
+        """Transpile the ASTx to LLVM-IR and build it to an executable file."""
         result = self.compile(expr)
 
         with tempfile.NamedTemporaryFile(suffix="", delete=False) as temp_file:
@@ -254,4 +271,5 @@ class LLVMIR(Builder):
         sh.clang([file_path_o, "-o", self.output_file], **self.sh_args)
 
     def run(self) -> None:
+        """Run the generated executable."""
         sh([self.output_file])

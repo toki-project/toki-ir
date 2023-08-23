@@ -28,7 +28,7 @@ class BuilderTranslator:
 
 
 class Builder(ABC):
-    """Backend protocol."""
+    """ASTx Builder."""
 
     translator: BuilderTranslator
     tmp_path: str
@@ -37,6 +37,7 @@ class Builder(ABC):
     sh_args: Dict[str, Any]
 
     def __init__(self) -> None:
+        """Initialize Builder object."""
         self.translator = BuilderTranslator()
         self.tmp_path = ""
         self.output_file = ""
@@ -49,15 +50,23 @@ class Builder(ABC):
         )
 
     def module(self) -> ast.Module:
+        """Create a new ASTx Module."""
         return ast.Module()
 
     def compile(self, expr: ast.AST) -> str:
+        """Transpile ASTx to LLVM-IR."""
         return self.translator.translate(expr)
 
     @abstractmethod
-    def build(self, expr: ast.AST, output_file: str) -> None:  # noqa: F841
+    def build(
+        self,
+        expr: ast.AST,
+        output_file: str,  # noqa: F841, RUF100
+    ) -> None:
+        """Transpile ASTx to LLVM-IR and build an executable file."""
         ...
 
     @abstractmethod
     def run(self) -> None:
+        """Run the generated executable."""
         ...

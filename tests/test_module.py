@@ -1,3 +1,4 @@
+"""Tests for the Module AST."""
 import pytest
 
 from arxir import ast
@@ -6,6 +7,7 @@ from arxir.builders.llvmir import LLVMIR
 
 @pytest.fixture
 def fn_add() -> ast.AST:
+    """Create a fixture for a function `add`."""
     var_a = ast.Variable(name="a", type_=ast.Int32, value=ast.Int32Literal(1))
     var_b = ast.Variable(name="b", type_=ast.Int32, value=ast.Int32Literal(2))
 
@@ -20,13 +22,15 @@ def fn_add() -> ast.AST:
 
 @pytest.fixture
 def fn_main() -> ast.AST:
+    """Create a fixture for the main function."""
     proto = ast.FunctionPrototype(name="main", args=[], return_type=ast.Int32)
     block = ast.Block()
     block.append(ast.Return(ast.Int32Literal(0)))
     return ast.Function(prototype=proto, body=block)
 
 
-def test_module_compile(fn_main: ast.AST, fn_add: ast.AST):
+def test_module_compile(fn_main: ast.AST, fn_add: ast.AST) -> None:
+    """Test module compilation."""
     builder = LLVMIR()
 
     module = builder.module()
@@ -37,7 +41,8 @@ def test_module_compile(fn_main: ast.AST, fn_add: ast.AST):
     assert ir_result
 
 
-def test_module_build(fn_main: ast.AST, fn_add: ast.AST):
+def test_module_build(fn_main: ast.AST, fn_add: ast.AST) -> None:
+    """Test module building."""
     builder = LLVMIR()
 
     module = builder.module()
