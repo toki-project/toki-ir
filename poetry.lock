@@ -13,13 +13,13 @@ files = [
 
 [[package]]
 name = "astx"
-version = "0.3.2"
-description = "OSL Python Package contains all the boilerplate you need to create a Python package."
+version = "0.3.3"
+description = "ASTx is an agnostic expression structure for AST."
 optional = false
-python-versions = ">=3.8.1,<4.0.0"
+python-versions = ">=3.8.1,<4"
 files = [
-    {file = "astx-0.3.2-py3-none-any.whl", hash = "sha256:e256ef5fd36c7ad4dded1b099e9e196c8246b9e5884901b1a348473700271d39"},
-    {file = "astx-0.3.2.tar.gz", hash = "sha256:2f5a2182bc1b7e8b8b1acdf4e336fe5454f959ec6fb34eaabcc3ee77856379a4"},
+    {file = "astx-0.3.3-py3-none-any.whl", hash = "sha256:a3f4c17b0c8735b98be3ef4b802c587a3ac8705000de40221d7899cbebac6726"},
+    {file = "astx-0.3.3.tar.gz", hash = "sha256:2cc54d902b559812c69e142d8b44c1046ea90edea9c51afd6b5215951f2c68a0"},
 ]
 
 [package.dependencies]
@@ -2565,4 +2565,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.8.1"
-content-hash = "a7cc7316159e157427eb3a63d32db06fc441131fcb665825741de01988f39752"
+content-hash = "0d6c0e5f5ce56eb0cbbd1a90abc070bf128010fdbf53182b1aa875fbc6211f93"

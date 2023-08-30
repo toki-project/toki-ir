@@ -67,6 +67,12 @@ class LLVMTranslator(BuilderTranslator):
         if expr_type is ast.Int32Literal:
             return self.translate_i32_literal(cast(ast.Int32Literal, expr))
 
+        # control-flows
+        if expr_type is ast.ForCountLoop:
+            return self.translate_for_count_loop(cast(ast.ForCountLoop, expr))
+        if expr_type is ast.ForRangeLoop:
+            return self.translate_for_range_loop(cast(ast.ForRangeLoop, expr))
+
         raise Exception(
             f"No translation was found for the given expression ({expr})."
         )
@@ -141,6 +147,14 @@ class LLVMTranslator(BuilderTranslator):
         for expr in block:
             result += self.translate(expr) + "\n"
         return result
+
+    def translate_for_count_loop(self, loop: ast.ForCountLoop) -> str:
+        """Translate ASTx For Range Loop to LLVM-IR."""
+        return ""
+
+    def translate_for_range_loop(self, loop: ast.ForRangeLoop) -> str:
+        """Translate ASTx For Range Loop to LLVM-IR."""
+        return ""
 
     def translate_module(self, module: ast.Module) -> str:
         """Translate ASTx Module to LLVM-IR."""
