@@ -97,6 +97,18 @@ class LLVMTranslator(BuilderTranslator):
             if binop.op_code == "/"
             else "rem"
             if binop.op_code == "%"
+            else "lt"
+            if binop.op_code == "<"
+            else "le"
+            if binop.op_code == "<="
+            else "gt"
+            if binop.op_code == ">"
+            else "ge"
+            if binop.op_code == ">="
+            else "eq"
+            if binop.op_code == "=="
+            else "ne"
+            if binop.op_code == "!="
             else ""
         )
 
@@ -148,9 +160,70 @@ class LLVMTranslator(BuilderTranslator):
             result += self.translate(expr) + "\n"
         return result
 
+    def translate_integer_comparison(self, op_code) -> str:
+        """
+        Return the comparison instruction.
+
+        Comparison operators for signed integers:
+
+        * slt: Signed less than
+        * sle: Signed less than or equal to
+        * seq: Signed equal to
+        * sne: Signed not equal to
+        * sgt: Signed greater than
+        * sge: Signed greater than or equal to
+
+        Comparison operators for unsigned integers:
+
+        * ult: Unsigned less than
+        * ule: Unsigned less than or equal to
+        * ueq: Unsigned equal to
+        * une: Unsigned not equal to
+        * ugt: Unsigned greater than
+        * uge: Unsigned greater than or equal to
+        """
+        comp = "icmp s" + (
+            "slt"
+            if op_code == "<"
+            else "sle"
+            if op_code == "<="
+            else "seq"
+            if op_code == "=="
+            else "sne"
+            if op_code == "!="
+            else "sgt"
+            if op_code == ">"
+            else "sge"
+            if op_code == ">="
+            else ""
+        )
+        if comp == "icmp s":
+            raise Exception("Operator not recognized.")
+        return comp
+
     def translate_for_count_loop(self, loop: ast.ForCountLoop) -> str:
         """Translate ASTx For Range Loop to LLVM-IR."""
-        return ""
+        init_type = MAP_TYPE_STR[loop.initializer.type_]
+
+        # cond = self.translate(loop.condition)
+        comp = self.translate_integer_comparison(loop.condition.op_code)
+        comp_rhs = loop.condition.rhs.value
+
+        result = (
+            "for.cond:"
+            f"  %i.val = load {init_type}, {init_type}* %i"
+            f"  %cond = {comp} {init_type} %i.val, {comp_rhs}"
+            "  br i1 %cond, label %for.body, label %for.end"
+            ""
+            "for.body:"
+            "  %i.next = add i32 %i.val, 1"
+            "  store i32 %i.next, i32* %i"
+            "  br label %for.cond"
+            ""
+            "for.end:"
+        )
+
+        return result
 
     def translate_for_range_loop(self, loop: ast.ForRangeLoop) -> str:
         """Translate ASTx For Range Loop to LLVM-IR."""
