@@ -160,7 +160,7 @@ class LLVMTranslator(BuilderTranslator):
             result += self.translate(expr) + "\n"
         return result
 
-    def translate_integer_comparison(self, op_code) -> str:
+    def translate_integer_comparison(self, op_code: str) -> str:
         """
         Return the comparison instruction.
 
@@ -182,7 +182,7 @@ class LLVMTranslator(BuilderTranslator):
         * ugt: Unsigned greater than
         * uge: Unsigned greater than or equal to
         """
-        comp = "icmp s" + (
+        comp = "icmp " + (
             "slt"
             if op_code == "<"
             else "sle"
@@ -197,33 +197,39 @@ class LLVMTranslator(BuilderTranslator):
             if op_code == ">="
             else ""
         )
-        if comp == "icmp s":
+        if comp == "icmp ":
             raise Exception("Operator not recognized.")
         return comp
 
     def translate_for_count_loop(self, loop: ast.ForCountLoop) -> str:
         """Translate ASTx For Range Loop to LLVM-IR."""
-        init_type = MAP_TYPE_STR[loop.initializer.type_]
+        # note: this should be done in a more flexible way
+        initializer = cast(ast.Variable, loop.initializer)
+        init_type = MAP_TYPE_STR[initializer.type_]
+
+        # note: this should be done in a more flexible way
+        condition = cast(ast.BinaryOp, loop.condition)
 
         # cond = self.translate(loop.condition)
-        comp = self.translate_integer_comparison(loop.condition.op_code)
-        comp_rhs = loop.condition.rhs.value
+        comp = self.translate_integer_comparison(condition.op_code)
+        comp_rhs = condition.rhs.value  # type: ignore
 
-        result = (
-            "for.cond:"
-            f"  %i.val = load {init_type}, {init_type}* %i"
-            f"  %cond = {comp} {init_type} %i.val, {comp_rhs}"
-            "  br i1 %cond, label %for.body, label %for.end"
-            ""
-            "for.body:"
-            "  %i.next = add i32 %i.val, 1"
-            "  store i32 %i.next, i32* %i"
-            "  br label %for.cond"
-            ""
-            "for.end:"
+        transp_cond = (
+            "for.cond:\n"
+            f"  %i.val = load {init_type}, {init_type}* %i\n"
+            f"  %cond = {comp} {init_type} %i.val, {comp_rhs}\n"
+            "  br i1 %cond, label %for.body, label %for.end\n"
+            "\n"
         )
 
-        return result
+        transp_body = "for.body:\n"
+        for node in loop.body.nodes:
+            transp_body += self.translate(node)
+        transp_body += f"  %i.next = add {init_type} %i.val, 1\n"
+        transp_body += f"  store {init_type} %i.next, {init_type}* %i\n"
+        transp_body += "  br label %for.cond\n\n"
+
+        return transp_cond + transp_body + "for.end:\n"
 
     def translate_for_range_loop(self, loop: ast.ForRangeLoop) -> str:
         """Translate ASTx For Range Loop to LLVM-IR."""
@@ -334,7 +340,7 @@ class LLVMIR(Builder):
 
     def build(self, expr: ast.AST, output_file: str) -> None:
         """Transpile the ASTx to LLVM-IR and build it to an executable file."""
-        result = self.compile(expr)
+        result = self.translate(expr)
 
         with tempfile.NamedTemporaryFile(suffix="", delete=False) as temp_file:
             self.tmp_path = temp_file.name

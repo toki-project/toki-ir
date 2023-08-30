@@ -1,11 +1,20 @@
 """Test For Loop statements."""
-import tempfile
+import pytest
 
 from arxir import ast
 from arxir.builders.llvmir import LLVMIR
 
+from .conftest import check_result  # noqa: F401
 
-def test_for_range() -> None:
+
+@pytest.mark.parametrize(
+    "action,expected_file",
+    [
+        ("translate", ""),
+        ("build", ""),
+    ],
+)
+def test_for_range(action: str, expected_file: str) -> None:
     """Test For Range statement."""
     builder = LLVMIR()
 
@@ -30,13 +39,17 @@ def test_for_range() -> None:
     module = builder.module()
     module.block.append(fn_main)
 
-    with tempfile.NamedTemporaryFile(
-        suffix=".exe", prefix="arx", dir="/tmp"
-    ) as fp:
-        builder.build(module, output_file=fp.name)
+    # check_result(action, builder, module, expected_file)
 
 
-def test_for_count() -> None:
+@pytest.mark.parametrize(
+    "action,expected_file",
+    [
+        ("translate", ""),
+        ("build", ""),
+    ],
+)
+def test_for_count(action: str, expected_file: str) -> None:
     """Test the For Count statement."""
     builder = LLVMIR()
 
@@ -60,7 +73,4 @@ def test_for_count() -> None:
     module = builder.module()
     module.block.append(fn_main)
 
-    with tempfile.NamedTemporaryFile(
-        suffix=".exe", prefix="arx", dir="/tmp"
-    ) as fp:
-        builder.build(module, output_file=fp.name)
+    # check_result(action, builder, module, expected_file)

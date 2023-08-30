@@ -53,7 +53,7 @@ class Builder(ABC):
         """Create a new ASTx Module."""
         return ast.Module()
 
-    def compile(self, expr: ast.AST) -> str:
+    def translate(self, expr: ast.AST) -> str:
         """Transpile ASTx to LLVM-IR."""
         return self.translator.translate(expr)
 

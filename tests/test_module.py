@@ -4,6 +4,8 @@ import pytest
 from arxir import ast
 from arxir.builders.llvmir import LLVMIR
 
+from .conftest import check_result
+
 
 @pytest.fixture
 def fn_add() -> ast.AST:
@@ -20,39 +22,47 @@ def fn_add() -> ast.AST:
     return ast.Function(prototype=proto, body=block)
 
 
-@pytest.fixture
-def fn_main() -> ast.AST:
-    """Create a fixture for the main function."""
-    proto = ast.FunctionPrototype(name="main", args=[], return_type=ast.Int32)
-    block = ast.Block()
-    block.append(ast.Return(ast.Int32Literal(0)))
-    return ast.Function(prototype=proto, body=block)
-
-
-def test_module_compile(fn_main: ast.AST, fn_add: ast.AST) -> None:
-    """Test module compilation."""
+@pytest.mark.parametrize(
+    "action,expected_file",
+    [
+        ("translate", "test_module_fn_add.ll"),
+    ],
+)
+def test_module_fn_add(
+    action: str, expected_file: str, fn_add: ast.AST
+) -> None:
+    """Test ASTx Module with a function called add."""
     builder = LLVMIR()
 
     module = builder.module()
     module.block.append(fn_add)
 
-    ir_result = builder.compile(module)
-    print(ir_result)
-    assert ir_result
+    check_result(action, builder, module, expected_file)
 
 
-def test_module_build(fn_main: ast.AST, fn_add: ast.AST) -> None:
-    """Test module building."""
+@pytest.mark.parametrize(
+    "action,expected_file",
+    [
+        ("translate", "test_module_fn_main.ll"),
+        ("build", ""),
+    ],
+)
+def test_module_fn_main(
+    action: str, expected_file: str, fn_add: ast.AST
+) -> None:
+    """Test ASTx Module with a main function and a function called add."""
     builder = LLVMIR()
 
     module = builder.module()
     module.block.append(fn_add)
-    module.block.append(fn_main)
 
-    # TODO: after the first compiling, the next ones
-    #       doesn't work properly. it needs to be fixed
-    # ir_result = builder.compile(module)
-    # print(ir_result)
-    # assert ir_result
+    main_proto = ast.FunctionPrototype(
+        name="main", args=[], return_type=ast.Int32
+    )
+    main_block = ast.Block()
+    main_block.append(ast.Return(ast.Int32Literal(0)))
+    main_fn = ast.Function(prototype=main_proto, body=main_block)
 
-    builder.build(module, "/tmp/sum.exe")
+    module.block.append(main_fn)
+
+    check_result(action, builder, module, expected_file)
