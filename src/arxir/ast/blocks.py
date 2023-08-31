@@ -1,3 +1,4 @@
+"""ASTx Blocks extensions."""
 from __future__ import annotations
 
 import copy
@@ -5,8 +6,12 @@ import copy
 from astx.base import Expr
 from astx.blocks import Block
 from astx.blocks import Module as ModuleBase
+from public import public
+
+__all__ = ["Block"]
 
 
+@public
 class Target(Expr):
     datalayout: str
     triple: str
@@ -16,6 +21,7 @@ class Target(Expr):
         self.triple = triple
 
 
+@public
 class Module(ModuleBase):
     name: str
     block: Block

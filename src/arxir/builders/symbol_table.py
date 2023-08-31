@@ -1,3 +1,4 @@
+"""Symbol Table classes."""
 from typing import List
 
 from astx.symbol_table import SymbolTable

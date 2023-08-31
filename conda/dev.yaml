@@ -7,5 +7,5 @@ dependencies:
   - clangdev 14.*
   - python <3.11
   - poetry
-  - nodejs  # used by semantic-release
+  - nodejs # used by semantic-release
   - shellcheck

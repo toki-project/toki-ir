@@ -1,5 +1,7 @@
+"""LLVM-IR builder."""
 import tempfile
-from typing import Any, Dict, cast
+
+from typing import Dict, cast
 
 import sh
 
@@ -14,16 +16,28 @@ MAP_TYPE_STR: Dict[ast.ExprType, str] = {
     ast.Int64: "i64",
 }
 
-regtable = RegisterTable()
-symtable = SymbolTable()
-
-
-def strid(obj: Any) -> str:
-    return str(id(obj))
-
 
 class LLVMTranslator(BuilderTranslator):
-    def translate(self, expr: ast.AST) -> str:
+    """LLVM-IR Translator."""
+
+    regtable: RegisterTable
+    symtable: SymbolTable
+    n_branches: int
+
+    def __init__(self) -> None:
+        """Initialize LLVMTranslator object."""
+        super().__init__()
+        self.regtable = RegisterTable()
+        self.symtable = SymbolTable()
+        self.n_branches = 0
+
+    def reset(self) -> None:
+        """Reset the LLVMTranslator state."""
+        self.regtable = RegisterTable()
+        self.symtable = SymbolTable()
+        self.n_branches = 0
+
+    def translate(self, expr: ast.AST) -> str:  # noqa: PLR0911
         """
         Translate the expression using the appropriated function.
 
@@ -53,11 +67,18 @@ class LLVMTranslator(BuilderTranslator):
         if expr_type is ast.Int32Literal:
             return self.translate_i32_literal(cast(ast.Int32Literal, expr))
 
+        # control-flows
+        if expr_type is ast.ForCountLoop:
+            return self.translate_for_count_loop(cast(ast.ForCountLoop, expr))
+        if expr_type is ast.ForRangeLoop:
+            return self.translate_for_range_loop(cast(ast.ForRangeLoop, expr))
+
         raise Exception(
             f"No translation was found for the given expression ({expr})."
         )
 
     def translate_binary_op(self, binop: ast.BinaryOp) -> str:
+        """Translate ASTx Binary Operation to LLVM-IR."""
         # note: need to check if it is needed to be handle in some way
         self.translate(binop.lhs)
         self.translate(binop.rhs)
@@ -76,13 +97,25 @@ class LLVMTranslator(BuilderTranslator):
             if binop.op_code == "/"
             else "rem"
             if binop.op_code == "%"
+            else "lt"
+            if binop.op_code == "<"
+            else "le"
+            if binop.op_code == "<="
+            else "gt"
+            if binop.op_code == ">"
+            else "ge"
+            if binop.op_code == ">="
+            else "eq"
+            if binop.op_code == "=="
+            else "ne"
+            if binop.op_code == "!="
             else ""
         )
 
         if not op_name:
             raise Exception("The given binary operator is not valid.")
 
-        reg = regtable
+        reg = self.regtable
 
         alloca_tpl = "  %{} = alloca {}, align 4\n"
         store_tpl = "  store {} %{}, {}* %{}, align 4\n"
@@ -115,25 +148,103 @@ class LLVMTranslator(BuilderTranslator):
         )
 
         binop.comment = str(reg.last)
-        symtable.define(binop)
+        self.symtable.define(binop)
 
         return result
 
     def translate_block(self, block: ast.Block) -> str:
+        """Translate ASTx Block to LLVM-IR."""
         result = ""
 
         for expr in block:
             result += self.translate(expr) + "\n"
         return result
 
+    def translate_integer_comparison(self, op_code: str) -> str:
+        """
+        Return the comparison instruction.
+
+        Comparison operators for signed integers:
+
+        * slt: Signed less than
+        * sle: Signed less than or equal to
+        * seq: Signed equal to
+        * sne: Signed not equal to
+        * sgt: Signed greater than
+        * sge: Signed greater than or equal to
+
+        Comparison operators for unsigned integers:
+
+        * ult: Unsigned less than
+        * ule: Unsigned less than or equal to
+        * ueq: Unsigned equal to
+        * une: Unsigned not equal to
+        * ugt: Unsigned greater than
+        * uge: Unsigned greater than or equal to
+        """
+        comp = "icmp " + (
+            "slt"
+            if op_code == "<"
+            else "sle"
+            if op_code == "<="
+            else "seq"
+            if op_code == "=="
+            else "sne"
+            if op_code == "!="
+            else "sgt"
+            if op_code == ">"
+            else "sge"
+            if op_code == ">="
+            else ""
+        )
+        if comp == "icmp ":
+            raise Exception("Operator not recognized.")
+        return comp
+
+    def translate_for_count_loop(self, loop: ast.ForCountLoop) -> str:
+        """Translate ASTx For Range Loop to LLVM-IR."""
+        # note: this should be done in a more flexible way
+        initializer = cast(ast.Variable, loop.initializer)
+        init_type = MAP_TYPE_STR[initializer.type_]
+
+        # note: this should be done in a more flexible way
+        condition = cast(ast.BinaryOp, loop.condition)
+
+        # cond = self.translate(loop.condition)
+        comp = self.translate_integer_comparison(condition.op_code)
+        comp_rhs = condition.rhs.value  # type: ignore
+
+        transp_cond = (
+            "for.cond:\n"
+            f"  %i.val = load {init_type}, {init_type}* %i\n"
+            f"  %cond = {comp} {init_type} %i.val, {comp_rhs}\n"
+            "  br i1 %cond, label %for.body, label %for.end\n"
+            "\n"
+        )
+
+        transp_body = "for.body:\n"
+        for node in loop.body.nodes:
+            transp_body += self.translate(node)
+        transp_body += f"  %i.next = add {init_type} %i.val, 1\n"
+        transp_body += f"  store {init_type} %i.next, {init_type}* %i\n"
+        transp_body += "  br label %for.cond\n\n"
+
+        return transp_cond + transp_body + "for.end:\n"
+
+    def translate_for_range_loop(self, loop: ast.ForRangeLoop) -> str:
+        """Translate ASTx For Range Loop to LLVM-IR."""
+        return ""
+
     def translate_module(self, module: ast.Module) -> str:
-        scope = symtable.scopes.add(f"module {module.name}")
-        symtable.scopes.set_default_parent(scope)
+        """Translate ASTx Module to LLVM-IR."""
+        scope = self.symtable.scopes.add(f"module {module.name}")
+        self.symtable.scopes.set_default_parent(scope)
 
         block_result = self.translate_block(module.block)
 
-        symtable.scopes.set_default_parent(scope.parent)
-        symtable.scopes.destroy(scope)
+        if scope.parent:
+            self.symtable.scopes.set_default_parent(scope.parent)
+        self.symtable.scopes.destroy(scope)
 
         return (
             f"""; ModuleID = '{module.name}.arx'\n"""
@@ -143,28 +254,30 @@ class LLVMTranslator(BuilderTranslator):
         ) + block_result
 
     def translate_i32_literal(self, i32: ast.Int32Literal) -> str:
-        regtable.increase()
+        """Translate ASTx Int32Literal to LLVM-IR."""
+        self.regtable.increase()
 
         result = (
             "  %{0} = alloca i32, align 4\n"
             "  store i32 0, i32* %{0}, align 4\n"
             "  %{1} = load i32, i32* %{0}, align 4\n"
-        ).format(regtable.last, regtable.last + 1)
-        regtable.increase()
+        ).format(self.regtable.last, self.regtable.last + 1)
+        self.regtable.increase()
 
-        i32.comment = str(regtable.last)
+        i32.comment = str(self.regtable.last)
 
         return result
 
     def translate_function_prototype(
         self, prototype: ast.FunctionPrototype
     ) -> str:
+        """Translate ASTx Function Prototype to LLVM-IR."""
         scope = "@" if prototype.scope == ast.ScopeKind.global_ else "%"
 
         trans_args = []
         for i, arg in enumerate(prototype.args):
-            symtable.define(arg)
-            arg.comment = str(regtable.last + i)
+            self.symtable.define(arg)
+            arg.comment = str(self.regtable.last + i)
             trans_args.append(
                 f"{MAP_TYPE_STR[arg.type_]} noundef %{arg.comment}"
             )
@@ -174,9 +287,9 @@ class LLVMTranslator(BuilderTranslator):
         # note: `+ 1` is used here because the previous register is used
         # somewhere and the compiler will raise an error.
         if prototype.args:
-            regtable.redefine(len(prototype.args) + 1)
+            self.regtable.redefine(len(prototype.args) + 1)
         else:
-            regtable.reset()
+            self.regtable.reset()
 
         return (
             f"define dso_local {MAP_TYPE_STR[prototype.return_type]} "
@@ -186,20 +299,23 @@ class LLVMTranslator(BuilderTranslator):
         )
 
     def translate_function(self, fn: ast.Function) -> str:
-        scope = symtable.scopes.add(f"function {fn.prototype.name}")
-        symtable.scopes.set_default_parent(scope)
-        regtable.append()
+        """Translate ASTx Function to LLVM-IR."""
+        scope = self.symtable.scopes.add(f"function {fn.prototype.name}")
+        self.symtable.scopes.set_default_parent(scope)
+        self.regtable.append()
 
         prototype_result = self.translate_function_prototype(fn.prototype)
         body_result = self.translate_block(fn.body)
 
-        regtable.pop()
-        symtable.scopes.set_default_parent(scope.parent)
-        symtable.scopes.destroy(scope)
+        self.regtable.pop()
+        if scope.parent:
+            self.symtable.scopes.set_default_parent(scope.parent)
+        self.symtable.scopes.destroy(scope)
 
         return f"""{prototype_result} {{\n""" f"""{body_result}\n""" f"}}"
 
     def translate_return(self, ret: ast.Return) -> str:
+        """Translate ASTx Return to LLVM-IR."""
         ret_tpl = "  ret {} %{}"
 
         ret_value = self.translate(ret.value)
@@ -210,16 +326,21 @@ class LLVMTranslator(BuilderTranslator):
         return f"{ret_value}\n{ret_tpl.format(reg_tp, reg_n)}"
 
     def translate_variable(self, var: ast.Variable) -> str:
+        """Translate ASTx Variable to LLVM-IR."""
         return f"variable {var.name}"
 
 
 class LLVMIR(Builder):
-    def __init__(self):
+    """LLVM-IR transpiler and compiler."""
+
+    def __init__(self) -> None:
+        """Initialize LLVMIR."""
         super().__init__()
         self.translator: BuilderTranslator = LLVMTranslator()
 
     def build(self, expr: ast.AST, output_file: str) -> None:
-        result = self.compile(expr)
+        """Transpile the ASTx to LLVM-IR and build it to an executable file."""
+        result = self.translate(expr)
 
         with tempfile.NamedTemporaryFile(suffix="", delete=False) as temp_file:
             self.tmp_path = temp_file.name
@@ -243,4 +364,5 @@ class LLVMIR(Builder):
         sh.clang([file_path_o, "-o", self.output_file], **self.sh_args)
 
     def run(self) -> None:
+        """Run the generated executable."""
         sh([self.output_file])
