@@ -4,7 +4,7 @@ import pytest
 from arxir import ast
 from arxir.builders.llvmir import LLVMIR
 
-from .conftest import check_result  # noqa: F401
+from .conftest import check_result
 
 
 @pytest.mark.parametrize(
@@ -39,7 +39,11 @@ def test_for_range(action: str, expected_file: str) -> None:
     module = builder.module()
     module.block.append(fn_main)
 
-    # check_result(action, builder, module, expected_file)
+    try:
+        # TODO: remove this try/except when the for loop is implemented
+        check_result(action, builder, module, expected_file)
+    except Exception:
+        ...
 
 
 @pytest.mark.parametrize(
@@ -73,4 +77,8 @@ def test_for_count(action: str, expected_file: str) -> None:
     module = builder.module()
     module.block.append(fn_main)
 
-    # check_result(action, builder, module, expected_file)
+    try:
+        # TODO: remove this try/except when the for loop is implemented
+        check_result(action, builder, module, expected_file)
+    except Exception:
+        ...
