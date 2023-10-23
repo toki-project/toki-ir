@@ -24,7 +24,6 @@ class Target(Expr):
 @public
 class Module(ModuleBase):
     name: str
-    block: Block
     target: Target
 
     def __init__(
@@ -34,6 +33,5 @@ class Module(ModuleBase):
             "e-m:e-i64:64-f80:128-n8:16:32:64-S128", "x86_64-unknown-linux-gnu"
         ),
     ):
-        self.name = name
+        super().__init__(name=name)
         self.target = copy.deepcopy(target)
-        self.block = Block()

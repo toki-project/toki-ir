@@ -26,7 +26,7 @@ groups:
           pre-commit install
           pre-commit run --all-files
 
-      unittest:
+      unit:
         help: run tests
         args:
           path:
@@ -42,10 +42,18 @@ groups:
       ci:
         help: run the sames tests executed on CI
         dependencies:
-          - target: tests.unittest
+          - target: tests.unit
           - target: tests.linter
 
       build:
+        help: build the temporary test c file
+        run: |
+          mkdir -p ./tmp
+          cd tmp
+          touch test.c
+          clang -O0 test.c -o test.bin
+
+      emit-ir:
         help: |
           build llvm-ir from a c code in order to use the result to compare
           with arx-ir result
@@ -53,7 +61,7 @@ groups:
           mkdir -p ./tmp
           cd tmp
           touch test.c
-          clang -emit-llvm -S test.c
+          clang -O0 -emit-llvm -S -Xclang -disable-llvm-passes test.c
 
 
   docs:

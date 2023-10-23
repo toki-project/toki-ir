@@ -50,7 +50,7 @@ jobs:
         run: poetry install
 
       - name: Run tests
-        run: makim tests.unittest
+        run: makim tests.unit
 
       - name: Run style checks
         run: makim tests.linter
