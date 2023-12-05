@@ -32,5 +32,10 @@ def check_result(
         with open(TEST_DATA_PATH / expected_file, "r") as f:
             expected = f.read()
         result = builder.translate(module)
+        print(" TEST ".center(80, "="))
+        print("==== EXPECTED =====")
+        print(f"\n{expected}\n")
+        print("==== results =====")
         print(f"\n{result}\n")
+        print("=" * 80)
         assert similarity(result, expected) >= similarity_factor

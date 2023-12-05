@@ -5,7 +5,8 @@ channels:
 dependencies:
   - clang 14.*
   - clangdev 14.*
-  - python <3.11
-  - poetry
+  - graphviz
+  - python >=3.8.1,<3.12
+  - poetry >=1.5
   - nodejs # used by semantic-release
   - shellcheck

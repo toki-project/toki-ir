@@ -1,9 +1,10 @@
 version: 1.0
 groups:
-  default:
+  clean:
     targets:
-      clean:
+      tmp:
         help: remove build artifacts, compiled files, and cache
+        shell: bash
         run: |
           rm -fr build/
           rm -fr dist/
@@ -11,9 +12,9 @@ groups:
           find . -name '*.egg-info' -exec rm -fr {} +
           find . -name '*.egg' -exec rm -f {} +
           find . -name '*.pyc' -exec rm -f {} +
-          find . -name
-          find . -name '__pycache__' -exec rm -fr '*.pyo' -exec rm -f {} +
-          find . -name '*~' -exec rm -f {} +{} +
+          find . -name '__pycache__' -exec rm -fr {} +
+          find . -name '*.pyo' -exec rm -f {} +
+          find . -name '*~' -exec rm -f {} +
           rm -f .coverage
           rm -fr htmlcov/
           rm -fr .pytest_cache
@@ -26,7 +27,7 @@ groups:
           pre-commit install
           pre-commit run --all-files
 
-      unittest:
+      unit:
         help: run tests
         args:
           path:
@@ -42,10 +43,18 @@ groups:
       ci:
         help: run the sames tests executed on CI
         dependencies:
-          - target: tests.unittest
+          - target: tests.unit
           - target: tests.linter
 
       build:
+        help: build the temporary test c file
+        run: |
+          mkdir -p ./tmp
+          cd tmp
+          touch test.c
+          clang -O0 test.c -o test.bin
+
+      emit-ir:
         help: |
           build llvm-ir from a c code in order to use the result to compare
           with arx-ir result
@@ -53,8 +62,18 @@ groups:
           mkdir -p ./tmp
           cd tmp
           touch test.c
-          clang -emit-llvm -S test.c
+          clang -O0 -emit-llvm -S -Xclang -disable-llvm-passes test.c
 
+      build-from-ir:
+        help: Build a binary file from llvm-ir
+        args:
+          file:
+            help: the llvm ir file path
+            type: string
+            required: true
+        run: |
+          llc -filetype=obj {{ args.file }}.ll -o {{ args.file }}.o
+          clang {{ args.file }}.o -o {{ args.file }}
 
   docs:
     targets:

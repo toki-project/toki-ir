@@ -1,15 +1,18 @@
 """LLVM-IR builder."""
+from __future__ import annotations
+
 import tempfile
 
-from typing import Dict, cast
+from typing import cast
 
+import astx
 import sh
 
 from arxir import ast
 from arxir.builders.base import Builder, BuilderTranslator
 from arxir.builders.symbol_table import RegisterTable, SymbolTable
 
-MAP_TYPE_STR: Dict[ast.ExprType, str] = {
+MAP_TYPE_STR: dict[ast.ExprType, str] = {
     ast.Int8: "i8",
     ast.Int16: "i16",
     ast.Int32: "i32",
@@ -240,7 +243,7 @@ class LLVMTranslator(BuilderTranslator):
         scope = self.symtable.scopes.add(f"module {module.name}")
         self.symtable.scopes.set_default_parent(scope)
 
-        block_result = self.translate_block(module.block)
+        block_result = self.translate_block(cast(astx.Block, module))
 
         if scope.parent:
             self.symtable.scopes.set_default_parent(scope.parent)

@@ -3,7 +3,9 @@ from __future__ import annotations
 
 import copy
 
-from astx.base import Expr
+from typing import cast
+
+from astx.base import Expr, ReprStruct
 from astx.blocks import Block
 from astx.blocks import Module as ModuleBase
 from public import public
@@ -20,11 +22,15 @@ class Target(Expr):
         self.datalayout = datalayout
         self.triple = triple
 
+    def get_struct(self) -> ReprStruct:
+        """Return a simple structure that represents the object."""
+        struct = {"TARGET": f"{self.triple}: {self.datalayout}"}
+        return cast(ReprStruct, struct)
+
 
 @public
 class Module(ModuleBase):
     name: str
-    block: Block
     target: Target
 
     def __init__(
@@ -34,6 +40,5 @@ class Module(ModuleBase):
             "e-m:e-i64:64-f80:128-n8:16:32:64-S128", "x86_64-unknown-linux-gnu"
         ),
     ):
-        self.name = name
+        super().__init__(name=name)
         self.target = copy.deepcopy(target)
-        self.block = Block()
