@@ -63,6 +63,16 @@ groups:
           touch test.c
           clang -O0 -emit-llvm -S -Xclang -disable-llvm-passes test.c
 
+      build-from-ir:
+        help: Build a binary file from llvm-ir
+        args:
+          file:
+            help: the llvm ir file path
+            type: string
+            required: true
+        run: |
+          llc -filetype=obj {{ args.file }}.ll -o {{ args.file }}.o
+          clang {{ args.file }}.o -o {{ args.file }}
 
   docs:
     targets:
