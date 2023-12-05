@@ -16,7 +16,7 @@ include = ["src/arxir/py.typed"]
 [tool.poetry.dependencies]
 python = ">=3.8.1,<3.12"
 atpublic = ">=4.0"
-astx = ">=0.7"
+astx = ">=0.7.1"
 sh = ">=2.0.4"
 typing-extensions = { version = "^4", python = "<3.9" }
 
