@@ -3,44 +3,184 @@ from __future__ import annotations
 
 import tempfile
 
-from typing import cast
+from typing import Any, cast
 
-import astx
 import sh
+
+from llvmlite import binding as llvm
+from llvmlite import ir
 
 from arxir import ast
 from arxir.builders.base import Builder, BuilderTranslator
-from arxir.builders.symbol_table import RegisterTable, SymbolTable
-
-MAP_TYPE_STR: dict[ast.ExprType, str] = {
-    ast.Int8: "i8",
-    ast.Int16: "i16",
-    ast.Int32: "i32",
-    ast.Int64: "i64",
-}
 
 
-class LLVMTranslator(BuilderTranslator):
+class VariablesLLVM:
+    """Store all the LLVM variables that is used for the code generation."""
+
+    FLOAT_TYPE: ir.types.Type
+    DOUBLE_TYPE: ir.types.Type
+    INT8_TYPE: ir.types.Type
+    INT32_TYPE: ir.types.Type
+    VOID_TYPE: ir.types.Type
+
+    context: ir.context.Context
+    module: ir.module.Module
+
+    ir_builder: ir.builder.IRBuilder
+
+    def get_data_type(self, type_name: str) -> ir.types.Type:
+        """
+        Get the LLVM data type for the given type name.
+
+        Parameters
+        ----------
+            type_name (str): The name of the type.
+
+        Returns
+        -------
+            ir.Type: The LLVM data type.
+        """
+        if type_name == "float":
+            return self.FLOAT_TYPE
+        elif type_name == "double":
+            return self.DOUBLE_TYPE
+        elif type_name == "int8":
+            return self.INT8_TYPE
+        elif type_name == "int32":
+            return self.INT32_TYPE
+        elif type_name == "char":
+            return self.INT8_TYPE
+        elif type_name == "void":
+            return self.VOID_TYPE
+
+        raise Exception("[EE]: type_name not valid.")
+
+
+class LLVMLiteIRTranslator(BuilderTranslator):
     """LLVM-IR Translator."""
 
-    regtable: RegisterTable
-    symtable: SymbolTable
-    n_branches: int
+    # AllocaInst
+    named_values: dict[str, Any] = {}  # noqa: RUF012
+    _llvm: VariablesLLVM
+
+    function_protos: dict[str, ast.FunctionPrototype]
+    result_stack: list[ir.Value | ir.Function] = []  # noqa: RUF012
 
     def __init__(self) -> None:
         """Initialize LLVMTranslator object."""
         super().__init__()
-        self.regtable = RegisterTable()
-        self.symtable = SymbolTable()
-        self.n_branches = 0
+        self.function_protos: dict[str, ast.FunctionPrototype] = {}
+        self.result_stack: list[ir.Value | ir.Function] = []
 
-    def reset(self) -> None:
-        """Reset the LLVMTranslator state."""
-        self.regtable = RegisterTable()
-        self.symtable = SymbolTable()
-        self.n_branches = 0
+        self.initialize()
 
-    def translate(self, expr: ast.AST) -> str:  # noqa: PLR0911
+        self.target = llvm.Target.from_default_triple()
+        self.target_machine = self.target.create_target_machine(
+            codemodel="small"
+        )
+
+        self._add_builtins()
+
+    def initialize(self) -> None:
+        """Initialize self."""
+        # self._llvm.context = ir.context.Context()
+        self._llvm = VariablesLLVM()
+        self._llvm.module = ir.module.Module("Arx")
+
+        # initialize the target registry etc.
+        llvm.initialize()
+        llvm.initialize_all_asmprinters()
+        llvm.initialize_all_targets()
+        llvm.initialize_native_target()
+        llvm.initialize_native_asmparser()
+        llvm.initialize_native_asmprinter()
+
+        # Create a new builder for the module.
+        self._llvm.ir_builder = ir.IRBuilder()
+
+        # Data Types
+        self._llvm.FLOAT_TYPE = ir.FloatType()
+        self._llvm.DOUBLE_TYPE = ir.DoubleType()
+        self._llvm.INT8_TYPE = ir.IntType(8)
+        self._llvm.INT32_TYPE = ir.IntType(32)
+        self._llvm.VOID_TYPE = ir.VoidType()
+
+    def _add_builtins(self) -> None:
+        # The C++ tutorial adds putchard() simply by defining it in the host
+        # C++ code, which is then accessible to the JIT. It doesn't work as
+        # simply for us; but luckily it's very easy to define new "C level"
+        # functions for our JITed code to use - just emit them as LLVM IR.
+        # This is what this method does.
+
+        # Add the declaration of putchar
+        putchar_ty = ir.FunctionType(
+            self._llvm.INT32_TYPE, [self._llvm.INT32_TYPE]
+        )
+        putchar = ir.Function(self._llvm.module, putchar_ty, "putchar")
+
+        # Add putchard
+        putchard_ty = ir.FunctionType(
+            self._llvm.FLOAT_TYPE, [self._llvm.FLOAT_TYPE]
+        )
+        putchard = ir.Function(self._llvm.module, putchard_ty, "putchard")
+
+        ir_builder = ir.IRBuilder(putchard.append_basic_block("entry"))
+
+        ival = ir_builder.fptoui(
+            putchard.args[0], self._llvm.INT32_TYPE, "intcast"
+        )
+
+        ir_builder.call(putchar, [ival])
+        ir_builder.ret(ir.Constant(self._llvm.FLOAT_TYPE, 0))
+
+    def get_function(self, name: str) -> ir.Function:
+        """
+        Put the function defined by the given name to result_func.
+
+        Parameters
+        ----------
+            name: Function name
+        """
+        if name in self._llvm.module.globals:
+            fn = self._llvm.module.get_global(name)
+            self.result_stack.append(fn)
+            return
+
+        if name in self.function_protos:
+            self.visit(self.function_protos[name])
+            return
+
+    def create_entry_block_alloca(
+        self, var_name: str, type_name: str
+    ) -> Any:  # llvm.AllocaInst
+        """
+        Create an alloca instruction in the entry block of the function.
+
+        This is used for mutable variables, etc.
+
+        Parameters
+        ----------
+        fn: The llvm function
+        var_name: The variable name
+        type_name: The type name
+
+        Returns
+        -------
+          An llvm allocation instance.
+        """
+        tmp_builder = ir.IRBuilder()
+        tmp_builder.position_at_start(
+            self._llvm.ir_builder.function.entry_basic_block
+        )
+        return tmp_builder.alloca(
+            self._llvm.get_data_type(type_name), None, var_name
+        )
+
+    def visit(self, expr: ast.AST) -> None:
+        """Translate an expression."""
+        return self.translate(expr)
+
+    def translate(self, expr: ast.AST) -> None:  # noqa: PLR0911
         """
         Translate the expression using the appropriated function.
 
@@ -80,266 +220,353 @@ class LLVMTranslator(BuilderTranslator):
             f"No translation was found for the given expression ({expr})."
         )
 
-    def translate_binary_op(self, binop: ast.BinaryOp) -> str:
-        """Translate ASTx Binary Operation to LLVM-IR."""
-        # note: need to check if it is needed to be handle in some way
-        self.translate(binop.lhs)
-        self.translate(binop.rhs)
+    def translate_binary_op(self, expr: ast.BinaryOp) -> None:
+        """Translate binary operation expression."""
+        if expr.op_code == "=":
+            # Special case '=' because we don't want to emit the lhs as an
+            # expression.
+            # Assignment requires the lhs to be an identifier.
+            # This assumes we're building without RTTI because LLVM builds
+            # that way by default.
+            # If you build LLVM with RTTI, this can be changed to a
+            # dynamic_cast for automatic error checking.
+            var_lhs = expr.lhs
 
-        lhs_type = MAP_TYPE_STR[binop.lhs.type_]
-        rhs_type = MAP_TYPE_STR[binop.rhs.type_]
+            if not isinstance(var_lhs, ast.VariableExprAST):
+                raise Exception("destination of '=' must be a variable")
 
-        op_name = (
-            "add"
-            if binop.op_code == "+"
-            else "sub"
-            if binop.op_code == "-"
-            else "mul"
-            if binop.op_code == "*"
-            else "div"
-            if binop.op_code == "/"
-            else "rem"
-            if binop.op_code == "%"
-            else "lt"
-            if binop.op_code == "<"
-            else "le"
-            if binop.op_code == "<="
-            else "gt"
-            if binop.op_code == ">"
-            else "ge"
-            if binop.op_code == ">="
-            else "eq"
-            if binop.op_code == "=="
-            else "ne"
-            if binop.op_code == "!="
-            else ""
-        )
+            # Codegen the rhs.
+            self.visit(expr.rhs)
+            llvm_rhs = self.result_stack.pop()
 
-        if not op_name:
-            raise Exception("The given binary operator is not valid.")
+            if not llvm_rhs:
+                raise Exception("codegen: Invalid rhs expression.")
 
-        reg = self.regtable
+            # Look up the name.
+            llvm_lhs = self.named_values[var_lhs.get_name()]
 
-        alloca_tpl = "  %{} = alloca {}, align 4\n"
-        store_tpl = "  store {} %{}, {}* %{}, align 4\n"
-        load_tpl = "  %{} = load {}, {}* %{}, align 4\n"
-        op_tpl = "  %{} = {} nsw {} %{}, %{}"
+            if not llvm_lhs:
+                raise Exception("codegen: Invalid lhs variable name")
 
-        result = ""
+            self._llvm.ir_builder.store(llvm_rhs, llvm_lhs)
+            result = llvm_rhs
+            self.result_stack.append(result)
+            return
 
-        # alloca
-        result += alloca_tpl.format(reg.last, lhs_type)
-        reg.increase()
-        result += alloca_tpl.format(reg.last, rhs_type)
+        self.visit(expr.lhs)
+        llvm_lhs = self.result_stack.pop()
+        self.visit(expr.rhs)
+        llvm_rhs = self.result_stack.pop()
 
-        # store
-        reg_lhs = binop.lhs.comment
-        reg_rhs = binop.rhs.comment
-        result += store_tpl.format(lhs_type, reg_lhs, lhs_type, reg.last - 1)
-        result += store_tpl.format(rhs_type, reg_rhs, rhs_type, reg.last)
+        if not llvm_lhs or not llvm_rhs:
+            raise Exception("codegen: Invalid lhs/rhs")
 
-        # load
-        reg.increase()
-        result += load_tpl.format(reg.last, lhs_type, lhs_type, reg.last - 2)
-        reg.increase()
-        result += load_tpl.format(reg.last, rhs_type, rhs_type, reg.last - 2)
+        if expr.op_code == "+":
+            result = self._llvm.ir_builder.fadd(llvm_lhs, llvm_rhs, "addtmp")
+            self.result_stack.append(result)
+            return
+        elif expr.op_code == "-":
+            result = self._llvm.ir_builder.fsub(llvm_lhs, llvm_rhs, "subtmp")
+            self.result_stack.append(result)
+            return
+        elif expr.op_code == "*":
+            result = self._llvm.ir_builder.fmul(llvm_lhs, llvm_rhs, "multmp")
+            self.result_stack.append(result)
+            return
+        elif expr.op_code == "<":
+            cmp_result = self._llvm.ir_builder.fcmp_unordered(
+                "<", llvm_lhs, llvm_rhs, "lttmp"
+            )
+            # Convert bool 0/1 to float 0.0 or 1.0
+            result = self._llvm.ir_builder.uitofp(
+                cmp_result, self._llvm.FLOAT_TYPE, "booltmp"
+            )
+            self.result_stack.append(result)
+            return
+        elif expr.op_code == ">":
+            cmp_result = self._llvm.ir_builder.fcmp_unordered(
+                ">", llvm_lhs, llvm_rhs, "gttmp"
+            )
+            # Convert bool 0/1 to float 0.0 or 1.0
+            result = self._llvm.ir_builder.uitofp(
+                cmp_result, self._llvm.FLOAT_TYPE, "booltmp"
+            )
+            self.result_stack.append(result)
+            return
 
-        # operation
-        reg.increase()
-        result += op_tpl.format(
-            reg.last, op_name, lhs_type, reg.last - 2, reg.last - 1
-        )
+        # If it wasn't a builtin binary operator, it must be a user defined
+        # one. Emit a call to it.
+        fn = self.get_function("binary" + expr.op_code)
+        result = self._llvm.ir_builder.call(fn, [llvm_lhs, llvm_rhs], "binop")
+        self.result_stack.append(result)
 
-        binop.comment = str(reg.last)
-        self.symtable.define(binop)
-
-        return result
-
-    def translate_block(self, block: ast.Block) -> str:
+    def translate_block(self, block: ast.Block) -> None:
         """Translate ASTx Block to LLVM-IR."""
-        result = ""
+        result = []
+        for node in block.nodes:
+            self.visit(node)
+            result.append(self.result_stack.pop())
+        self.result_stack.append(result)
 
-        for expr in block:
-            result += self.translate(expr) + "\n"
-        return result
+    def translate_function_call(self, expr: ast.FunctionPrototype) -> None:
+        """Translate Function Call."""
+        callee_f = self.get_function(expr.callee)
 
-    def translate_integer_comparison(self, op_code: str) -> str:
-        """
-        Return the comparison instruction.
+        if not callee_f:
+            raise Exception("Unknown function referenced")
 
-        Comparison operators for signed integers:
+        if len(callee_f.args) != len(expr.args):
+            raise Exception("codegen: Incorrect # arguments passed.")
 
-        * slt: Signed less than
-        * sle: Signed less than or equal to
-        * seq: Signed equal to
-        * sne: Signed not equal to
-        * sgt: Signed greater than
-        * sge: Signed greater than or equal to
+        llvm_args = []
+        for arg in expr.args:
+            self.visit(arg)
+            llvm_arg = self.result_stack.pop()
+            if not llvm_arg:
+                raise Exception("codegen: Invalid callee argument.")
+            llvm_args.append(llvm_arg)
 
-        Comparison operators for unsigned integers:
+        result = self._llvm.ir_builder.call(callee_f, llvm_args, "calltmp")
+        self.result_stack.append(result)
 
-        * ult: Unsigned less than
-        * ule: Unsigned less than or equal to
-        * ueq: Unsigned equal to
-        * une: Unsigned not equal to
-        * ugt: Unsigned greater than
-        * uge: Unsigned greater than or equal to
-        """
-        comp = "icmp " + (
-            "slt"
-            if op_code == "<"
-            else "sle"
-            if op_code == "<="
-            else "seq"
-            if op_code == "=="
-            else "sne"
-            if op_code == "!="
-            else "sgt"
-            if op_code == ">"
-            else "sge"
-            if op_code == ">="
-            else ""
-        )
-        if comp == "icmp ":
-            raise Exception("Operator not recognized.")
-        return comp
+    def translate_if_stmt(self, expr: ast.If) -> None:
+        """Translate IF statement."""
+        self.visit(expr.cond)
+        cond_v = self.result_stack.pop()
 
-    def translate_for_count_loop(self, loop: ast.ForCountLoop) -> str:
-        """Translate ASTx For Range Loop to LLVM-IR."""
-        # note: this should be done in a more flexible way
-        initializer = cast(ast.Variable, loop.initializer)
-        init_type = MAP_TYPE_STR[initializer.type_]
+        if not cond_v:
+            raise Exception("codegen: Invalid condition expression.")
 
-        # note: this should be done in a more flexible way
-        condition = cast(ast.BinaryOp, loop.condition)
-
-        # cond = self.translate(loop.condition)
-        comp = self.translate_integer_comparison(condition.op_code)
-        comp_rhs = condition.rhs.value  # type: ignore
-
-        transp_cond = (
-            "for.cond:\n"
-            f"  %i.val = load {init_type}, {init_type}* %i\n"
-            f"  %cond = {comp} {init_type} %i.val, {comp_rhs}\n"
-            "  br i1 %cond, label %for.body, label %for.end\n"
-            "\n"
+        # Convert condition to a bool by comparing non-equal to 0.0.
+        cond_v = self._llvm.ir_builder.fcmp_ordered(
+            "!=",
+            cond_v,
+            ir.Constant(self._llvm.FLOAT_TYPE, 0.0),
         )
 
-        transp_body = "for.body:\n"
-        for node in loop.body.nodes:
-            transp_body += self.translate(node)
-        transp_body += f"  %i.next = add {init_type} %i.val, 1\n"
-        transp_body += f"  store {init_type} %i.next, {init_type}* %i\n"
-        transp_body += "  br label %for.cond\n\n"
+        # fn = self._llvm.ir_builder.position_at_start().getParent()
 
-        return transp_cond + transp_body + "for.end:\n"
+        # Create blocks for the then and else cases. Insert the 'then' block
+        # at the end of the function.
+        # then_bb = ir.Block(self._llvm.ir_builder.function, "then", fn)
+        then_bb = self._llvm.ir_builder.function.append_basic_block("then")
+        else_bb = ir.Block(self._llvm.ir_builder.function, "else")
+        merge_bb = ir.Block(self._llvm.ir_builder.function, "ifcont")
 
-    def translate_for_range_loop(self, loop: ast.ForRangeLoop) -> str:
+        self._llvm.ir_builder.cbranch(cond_v, then_bb, else_bb)
+
+        # Emit then value.
+        self._llvm.ir_builder.position_at_start(then_bb)
+        self.visit(expr.then_)
+        then_v = self.result_stack.pop()
+
+        if not then_v:
+            raise Exception("codegen: `Then` expression is invalid.")
+
+        self._llvm.ir_builder.branch(merge_bb)
+
+        # Codegen of 'then' can change the current block, update then_bb
+        # for the PHI.
+        then_bb = self._llvm.ir_builder.block
+
+        # Emit else block.
+        self._llvm.ir_builder.function.basic_blocks.append(else_bb)
+        self._llvm.ir_builder.position_at_start(else_bb)
+        self.visit(expr.else_)
+        else_v = self.result_stack.pop()
+        if not else_v:
+            raise Exception("Revisit this!")
+
+        # Emission of else_val could have modified the current basic block.
+        else_bb = self._llvm.ir_builder.block
+        self._llvm.ir_builder.branch(merge_bb)
+
+        # Emit merge block.
+        self._llvm.ir_builder.function.basic_blocks.append(merge_bb)
+        self._llvm.ir_builder.position_at_start(merge_bb)
+        phi = self._llvm.ir_builder.phi(self._llvm.FLOAT_TYPE, "iftmp")
+
+        phi.add_incoming(then_v, then_bb)
+        phi.add_incoming(else_v, else_bb)
+
+        self.result_stack.append(phi)
+
+    def translate_for_count_loop(self, expr: ast.ForCountLoop) -> None:
         """Translate ASTx For Range Loop to LLVM-IR."""
-        return ""
+        saved_block = self._llvm.ir_builder.block
+        var_addr = self.create_entry_block_alloca(expr.var_name, "float")
+        self._llvm.ir_builder.position_at_end(saved_block)
 
-    def translate_module(self, module: ast.Module) -> str:
+        # Emit the start code first, without 'variable' in scope.
+        self.visit(expr.start)
+        start_val = self.result_stack.pop()
+        if not start_val:
+            raise Exception("codegen: Invalid start argument.")
+
+        # Store the value into the alloca.
+        self._llvm.ir_builder.store(start_val, var_addr)
+
+        # Make the new basic block for the loop header, inserting after
+        # current block.
+        loop_bb = self._llvm.ir_builder.function.append_basic_block("loop")
+
+        # Insert an explicit fall through from the current block to the
+        # loop_bb.
+        self._llvm.ir_builder.branch(loop_bb)
+
+        # Start insertion in loop_bb.
+        self._llvm.ir_builder.position_at_start(loop_bb)
+
+        # Within the loop, the variable is defined equal to the PHI node.
+        # If it shadows an existing variable, we have to restore it, so save
+        # it now.
+        old_val = self.named_values.get(expr.var_name)
+        self.named_values[expr.var_name] = var_addr
+
+        # Emit the body of the loop. This, like any other expr, can change
+        # the current basic_block. Note that we ignore the value computed by
+        # the body, but don't allow an error.
+        self.visit(expr.body)
+        body_val = self.result_stack.pop()
+
+        if not body_val:
+            return
+
+        # Emit the step value.
+        if expr.step:
+            self.visit(expr.step)
+            step_val = self.result_stack.pop()
+            if not step_val:
+                return
+        else:
+            # If not specified, use 1.0.
+            step_val = ir.Constant(self._llvm.FLOAT_TYPE, 1.0)
+
+        # Compute the end condition.
+        self.visit(expr.end)
+        end_cond = self.result_stack.pop()
+        if not end_cond:
+            return
+
+        # Reload, increment, and restore the var_addr. This handles the case
+        # where the body of the loop mutates the variable.
+        cur_var = self._llvm.ir_builder.load(var_addr, expr.var_name)
+        next_var = self._llvm.ir_builder.fadd(cur_var, step_val, "nextvar")
+        self._llvm.ir_builder.store(next_var, var_addr)
+
+        # Convert condition to a bool by comparing non-equal to 0.0.
+        end_cond = self._llvm.ir_builder.fcmp_ordered(
+            "!=",
+            end_cond,
+            ir.Constant(self._llvm.DOUBLE_TYPE, 0.0),
+            "loopcond",
+        )
+
+        # Create the "after loop" block and insert it.
+        after_bb = self._llvm.ir_builder.function.append_basic_block(
+            "afterloop"
+        )
+
+        # Insert the conditional branch into the end of loop_bb.
+        self._llvm.ir_builder.cbranch(end_cond, loop_bb, after_bb)
+
+        # Any new code will be inserted in after_bb.
+        self._llvm.ir_builder.position_at_start(after_bb)
+
+        # Restore the unshadowed variable.
+        if old_val:
+            self.named_values[expr.var_name] = old_val
+        else:
+            self.named_values.pop(expr.var_name, None)
+
+        # for expr always returns 0.0.
+        result = ir.Constant(self._llvm.FLOAT_TYPE, 0.0)
+        self.result_stack.append(result)
+
+    def translate_for_range_loop(self, loop: ast.ForRangeLoop) -> None:
+        """Translate ASTx For Range Loop to LLVM-IR."""
+        print(loop)
+        pass
+
+    def translate_module(self, module: ast.Module) -> None:
         """Translate ASTx Module to LLVM-IR."""
-        scope = self.symtable.scopes.add(f"module {module.name}")
-        self.symtable.scopes.set_default_parent(scope)
+        self.translate_block(module)
+        print(str(self._llvm.module))
 
-        block_result = self.translate_block(cast(astx.Block, module))
-
-        if scope.parent:
-            self.symtable.scopes.set_default_parent(scope.parent)
-        self.symtable.scopes.destroy(scope)
-
-        return (
-            f"""; ModuleID = '{module.name}.arx'\n"""
-            f"""source_filename = "{module.name}.arx"\n"""
-            f"""target datalayout = "{module.target.datalayout}"\n"""
-            f"""target triple = "{module.target.triple}"\n\n"""
-        ) + block_result
-
-    def translate_i32_literal(self, i32: ast.Int32Literal) -> str:
+    def translate_i32_literal(self, expr: ast.Int32Literal) -> None:
         """Translate ASTx Int32Literal to LLVM-IR."""
-        self.regtable.increase()
-
-        result = (
-            "  %{0} = alloca i32, align 4\n"
-            "  store i32 0, i32* %{0}, align 4\n"
-            "  %{1} = load i32, i32* %{0}, align 4\n"
-        ).format(self.regtable.last, self.regtable.last + 1)
-        self.regtable.increase()
-
-        i32.comment = str(self.regtable.last)
-
-        return result
+        result = ir.Constant(self._llvm.INT32_TYPE, expr.value)
+        self.result_stack.append(result)
 
     def translate_function_prototype(
-        self, prototype: ast.FunctionPrototype
-    ) -> str:
+        self, expr: ast.FunctionPrototype
+    ) -> None:
         """Translate ASTx Function Prototype to LLVM-IR."""
-        scope = "@" if prototype.scope == ast.ScopeKind.global_ else "%"
+        args_type = [self._llvm.FLOAT_TYPE] * len(expr.args)
+        return_type = self._llvm.get_data_type("float")
+        fn_type = ir.FunctionType(return_type, args_type, False)
 
-        trans_args = []
-        for i, arg in enumerate(prototype.args):
-            self.symtable.define(arg)
-            arg.comment = str(self.regtable.last + i)
-            trans_args.append(
-                f"{MAP_TYPE_STR[arg.type_]} noundef %{arg.comment}"
+        fn = ir.Function(self._llvm.module, fn_type, expr.name)
+
+        # Set names for all arguments.
+        for idx, arg in enumerate(fn.args):
+            fn.args[idx].name = expr.args[idx].name
+
+        return fn
+
+    def translate_function(self, expr: ast.Function) -> None:
+        """Translate ASTx Function to LLVM-IR."""
+        proto = expr.prototype
+        self.function_protos[proto.name] = proto
+        fn = self.get_function(proto.name)
+
+        breakpoint()
+
+        if not fn:
+            raise Exception("Invalid function.")
+
+        # Create a new basic block to start insertion into.
+        basic_block = fn.append_basic_block("entry")
+        self._llvm.ir_builder = ir.IRBuilder(basic_block)
+
+        for llvm_arg in fn.args:
+            # Create an alloca for this variable.
+            alloca = self._llvm.ir_builder.alloca(
+                self._llvm.FLOAT_TYPE, name=llvm_arg.name
             )
 
-        args = ", ".join(trans_args)
+            # Store the initial value into the alloca.
+            self._llvm.ir_builder.store(llvm_arg, alloca)
 
-        # note: `+ 1` is used here because the previous register is used
-        # somewhere and the compiler will raise an error.
-        if prototype.args:
-            self.regtable.redefine(len(prototype.args) + 1)
+            # Add arguments to variable symbol table.
+            self.named_values[llvm_arg.name] = alloca
+
+        self.visit(expr.body)
+        retval = self.result_stack.pop()
+
+        # Validate the generated code, checking for consistency.
+        if retval:
+            self._llvm.ir_builder.ret(retval)
         else:
-            self.regtable.reset()
-
-        return (
-            f"define dso_local {MAP_TYPE_STR[prototype.return_type]} "
-            f"{scope}{prototype.name}("
-            f"{args}"
-            ")"
-        )
-
-    def translate_function(self, fn: ast.Function) -> str:
-        """Translate ASTx Function to LLVM-IR."""
-        scope = self.symtable.scopes.add(f"function {fn.prototype.name}")
-        self.symtable.scopes.set_default_parent(scope)
-        self.regtable.append()
-
-        prototype_result = self.translate_function_prototype(fn.prototype)
-        body_result = self.translate_block(fn.body)
-
-        self.regtable.pop()
-        if scope.parent:
-            self.symtable.scopes.set_default_parent(scope.parent)
-        self.symtable.scopes.destroy(scope)
-
-        return f"""{prototype_result} {{\n""" f"""{body_result}\n""" f"}}"
+            self._llvm.ir_builder.ret(ir.Constant(self._llvm.FLOAT_TYPE, 0))
+        return fn
 
     def translate_return(self, ret: ast.Return) -> str:
         """Translate ASTx Return to LLVM-IR."""
-        ret_tpl = "  ret {} %{}"
+        pass
 
-        ret_value = self.translate(ret.value)
-
-        reg_n = ret.value.comment
-
-        reg_tp = MAP_TYPE_STR[ret.value.type_]
-        return f"{ret_value}\n{ret_tpl.format(reg_tp, reg_n)}"
-
-    def translate_variable(self, var: ast.Variable) -> str:
+    def translate_variable(self, var: ast.Variable) -> None:
         """Translate ASTx Variable to LLVM-IR."""
         return f"variable {var.name}"
 
 
-class LLVMIR(Builder):
+class LLVMLiteIR(Builder):
     """LLVM-IR transpiler and compiler."""
 
     def __init__(self) -> None:
         """Initialize LLVMIR."""
         super().__init__()
-        self.translator: BuilderTranslator = LLVMTranslator()
+        self.translator: BuilderTranslator = LLVMLiteIRTranslator()
 
     def build(self, expr: ast.AST, output_file: str) -> None:
         """Transpile the ASTx to LLVM-IR and build it to an executable file."""

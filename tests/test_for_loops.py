@@ -14,9 +14,15 @@ from .conftest import check_result
         ("build", ""),
     ],
 )
-def test_for_range(action: str, expected_file: str) -> None:
+@pytest.mark.parametrize(
+    "builder_class",
+    [
+        LLVMIR,
+    ],
+)
+def test_for_range(action: str, expected_file: str, builder_class) -> None:
     """Test For Range statement."""
-    builder = LLVMIR()
+    builder = builder_class()
 
     # `for` statement
     var_a = ast.Variable("a", type_=ast.Int32, value=ast.Int32Literal(-1))
@@ -53,9 +59,15 @@ def test_for_range(action: str, expected_file: str) -> None:
         ("build", ""),
     ],
 )
-def test_for_count(action: str, expected_file: str) -> None:
+@pytest.mark.parametrize(
+    "builder_class",
+    [
+        LLVMIR,
+    ],
+)
+def test_for_count(action: str, expected_file: str, builder_class) -> None:
     """Test the For Count statement."""
-    builder = LLVMIR()
+    builder = builder_class()
 
     # for
     var_a = ast.Variable("a", type_=ast.Int32, value=ast.Int32Literal(0))
