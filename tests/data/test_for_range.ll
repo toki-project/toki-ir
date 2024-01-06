@@ -3,6 +3,16 @@ source_filename = "test.c"
 target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-f80:128-n8:16:32:64-S128"
 target triple = "x86_64-unknown-linux-gnu"
 
+declare i32 @"putchar"(i32 %".1")
+
+define float @"putchard"(float %".1")
+{
+entry:
+  %"intcast" = fptoui float %".1" to i32
+  %".3" = call i32 @"putchar"(i32 %"intcast")
+  ret float              0x0
+}
+
 ; Function Attrs: noinline nounwind optnone uwtable
 define dso_local i32 @main() #0 {
   %1 = alloca i32, align 4

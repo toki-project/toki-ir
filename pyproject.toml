@@ -17,9 +17,9 @@ include = ["src/arxir/py.typed"]
 python = ">=3.8.1,<3.12"
 atpublic = ">=4.0"
 astx = ">=0.7.1"
-sh = ">=2.0.4"
 typing-extensions = { version = "^4", python = "<3.9" }
 llvmlite = ">=0.41.1"
+plum-dispatch = ">=2.2.2"
 
 [tool.poetry.group.dev.dependencies]
 pytest = ">=7.3.2"
@@ -67,6 +67,7 @@ verbose = false
 [tool.ruff]
 line-length = 79
 force-exclude = true
+ignore = ["F811"]
 src = ["./"]
 exclude = [
   'docs',
@@ -100,9 +101,4 @@ ignore_missing_imports = true
 warn_unused_ignores = true
 warn_redundant_casts = true
 warn_unused_configs = true
-
-[[tool.mypy.overrides]]
-module = [
-  "sh",
-]
-ignore_missing_imports = true
+show_error_codes = true

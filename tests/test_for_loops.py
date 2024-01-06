@@ -1,8 +1,11 @@
 """Test For Loop statements."""
+from typing import Type
+
 import pytest
 
 from arxir import ast
-from arxir.builders.llvmir import LLVMIR
+from arxir.builders.base import Builder
+from arxir.builders.llvmliteir import LLVMLiteIR
 
 from .conftest import check_result
 
@@ -10,17 +13,19 @@ from .conftest import check_result
 @pytest.mark.parametrize(
     "action,expected_file",
     [
-        ("translate", ""),
+        ("translate", "test_for_range.ll"),
         ("build", ""),
     ],
 )
 @pytest.mark.parametrize(
     "builder_class",
     [
-        LLVMIR,
+        LLVMLiteIR,
     ],
 )
-def test_for_range(action: str, expected_file: str, builder_class) -> None:
+def test_for_range(
+    action: str, expected_file: str, builder_class: Type[Builder]
+) -> None:
     """Test For Range statement."""
     builder = builder_class()
 
@@ -45,11 +50,7 @@ def test_for_range(action: str, expected_file: str, builder_class) -> None:
     module = builder.module()
     module.block.append(fn_main)
 
-    try:
-        # TODO: remove this try/except when the for loop is implemented
-        check_result(action, builder, module, expected_file)
-    except Exception:
-        ...
+    check_result(action, builder, module, expected_file)
 
 
 @pytest.mark.parametrize(
@@ -62,10 +63,12 @@ def test_for_range(action: str, expected_file: str, builder_class) -> None:
 @pytest.mark.parametrize(
     "builder_class",
     [
-        LLVMIR,
+        LLVMLiteIR,
     ],
 )
-def test_for_count(action: str, expected_file: str, builder_class) -> None:
+def test_for_count(
+    action: str, expected_file: str, builder_class: Type[Builder]
+) -> None:
     """Test the For Count statement."""
     builder = builder_class()
 
@@ -89,8 +92,4 @@ def test_for_count(action: str, expected_file: str, builder_class) -> None:
     module = builder.module()
     module.block.append(fn_main)
 
-    try:
-        # TODO: remove this try/except when the for loop is implemented
-        check_result(action, builder, module, expected_file)
-    except Exception:
-        ...
+    check_result(action, builder, module, expected_file)

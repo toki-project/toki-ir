@@ -1,8 +1,10 @@
 """Tests for the Module AST."""
+from typing import Type
+
 import pytest
 
 from arxir import ast
-from arxir.builders.llvmir import LLVMIR
+from arxir.builders.base import Builder
 from arxir.builders.llvmliteir import LLVMLiteIR
 
 from .conftest import check_result
@@ -29,9 +31,17 @@ def fn_add() -> ast.AST:
         ("translate", "test_module_fn_add.ll"),
     ],
 )
-@pytest.mark.parametrize("builder_class", [LLVMIR, LLVMLiteIR])
+@pytest.mark.parametrize(
+    "builder_class",
+    [
+        LLVMLiteIR,
+    ],
+)
 def test_module_fn_add(
-    action: str, expected_file: str, fn_add: ast.AST, builder_class
+    action: str,
+    expected_file: str,
+    fn_add: ast.AST,
+    builder_class: Type[Builder],
 ) -> None:
     """Test ASTx Module with a function called add."""
     builder = builder_class()
@@ -52,11 +62,14 @@ def test_module_fn_add(
 @pytest.mark.parametrize(
     "builder_class",
     [
-        LLVMIR,
+        LLVMLiteIR,
     ],
 )
 def test_module_fn_main(
-    action: str, expected_file: str, fn_add: ast.AST, builder_class
+    action: str,
+    expected_file: str,
+    fn_add: ast.AST,
+    builder_class: Type[Builder],
 ) -> None:
     """Test ASTx Module with a main function and a function called add."""
     builder = builder_class()

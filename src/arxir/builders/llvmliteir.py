@@ -3,15 +3,24 @@ from __future__ import annotations
 
 import tempfile
 
-from typing import Any, cast
+from typing import Any, Optional, cast
 
 import sh
 
 from llvmlite import binding as llvm
 from llvmlite import ir
+from plum import dispatch
 
 from arxir import ast
-from arxir.builders.base import Builder, BuilderTranslator
+from arxir.builders.base import Builder, BuilderVisitor
+
+
+def safe_pop(lst: list[ir.Value | ir.Function]) -> ir.Value | ir.Function:
+    """Implement a safe pop operation for lists."""
+    try:
+        return lst.pop()
+    except IndexError:
+        return None
 
 
 class VariablesLLVM:
@@ -56,7 +65,7 @@ class VariablesLLVM:
         raise Exception("[EE]: type_name not valid.")
 
 
-class LLVMLiteIRTranslator(BuilderTranslator):
+class LLVMLiteIRVisitor(BuilderVisitor):
     """LLVM-IR Translator."""
 
     # AllocaInst
@@ -80,6 +89,11 @@ class LLVMLiteIRTranslator(BuilderTranslator):
         )
 
         self._add_builtins()
+
+    def translate(self, expr: ast.AST) -> str:
+        """Translate an ASTx expression to string."""
+        self.visit(expr)
+        return str(self._llvm.module)
 
     def initialize(self) -> None:
         """Initialize self."""
@@ -133,22 +147,22 @@ class LLVMLiteIRTranslator(BuilderTranslator):
         ir_builder.call(putchar, [ival])
         ir_builder.ret(ir.Constant(self._llvm.FLOAT_TYPE, 0))
 
-    def get_function(self, name: str) -> ir.Function:
+    def get_function(self, name: str) -> Optional[ir.Function]:
         """
-        Put the function defined by the given name to result_func.
+        Put the function defined by the given name to result stack.
 
         Parameters
         ----------
             name: Function name
         """
         if name in self._llvm.module.globals:
-            fn = self._llvm.module.get_global(name)
-            self.result_stack.append(fn)
-            return
+            return self._llvm.module.get_global(name)
 
         if name in self.function_protos:
             self.visit(self.function_protos[name])
-            return
+            return cast(ir.Function, self.result_stack.pop())
+
+        return None
 
     def create_entry_block_alloca(
         self, var_name: str, type_name: str
@@ -176,51 +190,13 @@ class LLVMLiteIRTranslator(BuilderTranslator):
             self._llvm.get_data_type(type_name), None, var_name
         )
 
+    @dispatch.abstract
     def visit(self, expr: ast.AST) -> None:
-        """Translate an expression."""
-        return self.translate(expr)
+        """Translate an ASTx expression."""
+        raise Exception("Not implemented yet.")
 
-    def translate(self, expr: ast.AST) -> None:  # noqa: PLR0911
-        """
-        Translate the expression using the appropriated function.
-
-        It works as a multi-dispatch visitor approach.
-        """
-        # structures
-        expr_type = type(expr)
-
-        if expr_type is ast.BinaryOp:
-            return self.translate_binary_op(cast(ast.BinaryOp, expr))
-        if expr_type is ast.Block:
-            return self.translate_block(cast(ast.Block, expr))
-        if expr_type is ast.Function:
-            return self.translate_function(cast(ast.Function, expr))
-        if expr_type is ast.FunctionPrototype:
-            return self.translate_function_prototype(
-                cast(ast.FunctionPrototype, expr)
-            )
-        if expr_type is ast.Module:
-            return self.translate_module(cast(ast.Module, expr))
-        if expr_type is ast.Variable:
-            return self.translate_variable(cast(ast.Variable, expr))
-        if expr_type is ast.Return:
-            return self.translate_return(cast(ast.Return, expr))
-
-        # datatypes
-        if expr_type is ast.Int32Literal:
-            return self.translate_i32_literal(cast(ast.Int32Literal, expr))
-
-        # control-flows
-        if expr_type is ast.ForCountLoop:
-            return self.translate_for_count_loop(cast(ast.ForCountLoop, expr))
-        if expr_type is ast.ForRangeLoop:
-            return self.translate_for_range_loop(cast(ast.ForRangeLoop, expr))
-
-        raise Exception(
-            f"No translation was found for the given expression ({expr})."
-        )
-
-    def translate_binary_op(self, expr: ast.BinaryOp) -> None:
+    @dispatch  # type: ignore[no-redef]
+    def visit(self, expr: ast.BinaryOp) -> None:
         """Translate binary operation expression."""
         if expr.op_code == "=":
             # Special case '=' because we don't want to emit the lhs as an
@@ -237,13 +213,13 @@ class LLVMLiteIRTranslator(BuilderTranslator):
 
             # Codegen the rhs.
             self.visit(expr.rhs)
-            llvm_rhs = self.result_stack.pop()
+            llvm_rhs = safe_pop(self.result_stack)
 
             if not llvm_rhs:
                 raise Exception("codegen: Invalid rhs expression.")
 
             # Look up the name.
-            llvm_lhs = self.named_values[var_lhs.get_name()]
+            llvm_lhs = self.named_values.get(var_lhs.get_name())
 
             if not llvm_lhs:
                 raise Exception("codegen: Invalid lhs variable name")
@@ -254,9 +230,10 @@ class LLVMLiteIRTranslator(BuilderTranslator):
             return
 
         self.visit(expr.lhs)
-        llvm_lhs = self.result_stack.pop()
+        llvm_lhs = safe_pop(self.result_stack)
+
         self.visit(expr.rhs)
-        llvm_rhs = self.result_stack.pop()
+        llvm_rhs = safe_pop(self.result_stack)
 
         if not llvm_lhs or not llvm_rhs:
             raise Exception("codegen: Invalid lhs/rhs")
@@ -300,7 +277,8 @@ class LLVMLiteIRTranslator(BuilderTranslator):
         result = self._llvm.ir_builder.call(fn, [llvm_lhs, llvm_rhs], "binop")
         self.result_stack.append(result)
 
-    def translate_block(self, block: ast.Block) -> None:
+    @dispatch  # type: ignore[no-redef]
+    def visit(self, block: ast.Block) -> None:
         """Translate ASTx Block to LLVM-IR."""
         result = []
         for node in block.nodes:
@@ -308,28 +286,8 @@ class LLVMLiteIRTranslator(BuilderTranslator):
             result.append(self.result_stack.pop())
         self.result_stack.append(result)
 
-    def translate_function_call(self, expr: ast.FunctionPrototype) -> None:
-        """Translate Function Call."""
-        callee_f = self.get_function(expr.callee)
-
-        if not callee_f:
-            raise Exception("Unknown function referenced")
-
-        if len(callee_f.args) != len(expr.args):
-            raise Exception("codegen: Incorrect # arguments passed.")
-
-        llvm_args = []
-        for arg in expr.args:
-            self.visit(arg)
-            llvm_arg = self.result_stack.pop()
-            if not llvm_arg:
-                raise Exception("codegen: Invalid callee argument.")
-            llvm_args.append(llvm_arg)
-
-        result = self._llvm.ir_builder.call(callee_f, llvm_args, "calltmp")
-        self.result_stack.append(result)
-
-    def translate_if_stmt(self, expr: ast.If) -> None:
+    @dispatch  # type: ignore[no-redef]
+    def visit(self, expr: ast.If) -> None:
         """Translate IF statement."""
         self.visit(expr.cond)
         cond_v = self.result_stack.pop()
@@ -391,7 +349,8 @@ class LLVMLiteIRTranslator(BuilderTranslator):
 
         self.result_stack.append(phi)
 
-    def translate_for_count_loop(self, expr: ast.ForCountLoop) -> None:
+    @dispatch  # type: ignore[no-redef]
+    def visit(self, expr: ast.ForCountLoop) -> None:
         """Translate ASTx For Range Loop to LLVM-IR."""
         saved_block = self._llvm.ir_builder.block
         var_addr = self.create_entry_block_alloca(expr.var_name, "float")
@@ -483,24 +442,47 @@ class LLVMLiteIRTranslator(BuilderTranslator):
         result = ir.Constant(self._llvm.FLOAT_TYPE, 0.0)
         self.result_stack.append(result)
 
-    def translate_for_range_loop(self, loop: ast.ForRangeLoop) -> None:
+    @dispatch  # type: ignore[no-redef]
+    def visit(self, expr: ast.ForRangeLoop) -> None:
         """Translate ASTx For Range Loop to LLVM-IR."""
-        print(loop)
-        pass
+        return
 
-    def translate_module(self, module: ast.Module) -> None:
+    @dispatch  # type: ignore[no-redef]
+    def visit(self, expr: ast.Module) -> None:
         """Translate ASTx Module to LLVM-IR."""
-        self.translate_block(module)
-        print(str(self._llvm.module))
+        for node in expr.nodes:
+            self.visit(node)
 
-    def translate_i32_literal(self, expr: ast.Int32Literal) -> None:
+    @dispatch  # type: ignore[no-redef]
+    def visit(self, expr: ast.Int32Literal) -> None:
         """Translate ASTx Int32Literal to LLVM-IR."""
         result = ir.Constant(self._llvm.INT32_TYPE, expr.value)
         self.result_stack.append(result)
 
-    def translate_function_prototype(
-        self, expr: ast.FunctionPrototype
-    ) -> None:
+    @dispatch  # type: ignore[no-redef]
+    def visit(self, expr: ast.Call) -> None:
+        """Translate Function Call."""
+        callee_f = self.get_function(expr.callee)
+
+        if not callee_f:
+            raise Exception("Unknown function referenced")
+
+        if len(callee_f.args) != len(expr.args):
+            raise Exception("codegen: Incorrect # arguments passed.")
+
+        llvm_args = []
+        for arg in expr.args:
+            self.visit(arg)
+            llvm_arg = self.result_stack.pop()
+            if not llvm_arg:
+                raise Exception("codegen: Invalid callee argument.")
+            llvm_args.append(llvm_arg)
+
+        result = self._llvm.ir_builder.call(callee_f, llvm_args, "calltmp")
+        self.result_stack.append(result)
+
+    @dispatch  # type: ignore[no-redef]
+    def visit(self, expr: ast.FunctionPrototype) -> None:
         """Translate ASTx Function Prototype to LLVM-IR."""
         args_type = [self._llvm.FLOAT_TYPE] * len(expr.args)
         return_type = self._llvm.get_data_type("float")
@@ -512,15 +494,14 @@ class LLVMLiteIRTranslator(BuilderTranslator):
         for idx, arg in enumerate(fn.args):
             fn.args[idx].name = expr.args[idx].name
 
-        return fn
+        self.result_stack.append(fn)
 
-    def translate_function(self, expr: ast.Function) -> None:
+    @dispatch  # type: ignore[no-redef]
+    def visit(self, expr: ast.Function) -> None:
         """Translate ASTx Function to LLVM-IR."""
         proto = expr.prototype
         self.function_protos[proto.name] = proto
         fn = self.get_function(proto.name)
-
-        breakpoint()
 
         if not fn:
             raise Exception("Invalid function.")
@@ -546,18 +527,29 @@ class LLVMLiteIRTranslator(BuilderTranslator):
 
         # Validate the generated code, checking for consistency.
         if retval:
-            self._llvm.ir_builder.ret(retval)
+            # note: this should be improved because a function
+            #       could have multiples returns
+            self._llvm.ir_builder.ret(retval[-1])
         else:
             self._llvm.ir_builder.ret(ir.Constant(self._llvm.FLOAT_TYPE, 0))
-        return fn
 
-    def translate_return(self, ret: ast.Return) -> str:
+        self.result_stack.append(fn)
+
+    @dispatch  # type: ignore[no-redef]
+    def visit(self, expr: ast.Return) -> None:
         """Translate ASTx Return to LLVM-IR."""
-        pass
+        self.visit(expr.value)
 
-    def translate_variable(self, var: ast.Variable) -> None:
+    @dispatch  # type: ignore[no-redef]
+    def visit(self, expr: ast.Variable) -> None:
         """Translate ASTx Variable to LLVM-IR."""
-        return f"variable {var.name}"
+        expr_var = self.named_values.get(expr.name)
+
+        if not expr_var:
+            raise Exception(f"Unknown variable name: {expr.name}")
+
+        result = self._llvm.ir_builder.load(expr_var, expr.name)
+        self.result_stack.append(result)
 
 
 class LLVMLiteIR(Builder):
@@ -566,7 +558,7 @@ class LLVMLiteIR(Builder):
     def __init__(self) -> None:
         """Initialize LLVMIR."""
         super().__init__()
-        self.translator: BuilderTranslator = LLVMLiteIRTranslator()
+        self.translator: BuilderVisitor = LLVMLiteIRVisitor()
 
     def build(self, expr: ast.AST, output_file: str) -> None:
         """Transpile the ASTx to LLVM-IR and build it to an executable file."""
