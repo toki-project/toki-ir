@@ -144,7 +144,7 @@ class LLVMLiteIRVisitor(BuilderVisitor):
 
         # Add putchard
         putchard_ty = ir.FunctionType(
-            self._llvm.FLOAT_TYPE, [self._llvm.FLOAT_TYPE]
+            self._llvm.INT32_TYPE, [self._llvm.INT32_TYPE]
         )
         putchard = ir.Function(self._llvm.module, putchard_ty, "putchard")
 
@@ -249,32 +249,40 @@ class LLVMLiteIRVisitor(BuilderVisitor):
             raise Exception("codegen: Invalid lhs/rhs")
 
         if expr.op_code == "+":
-            result = self._llvm.ir_builder.fadd(llvm_lhs, llvm_rhs, "addtmp")
+            # note: it should be according the datatype,
+            #       e.g. for float it should be fadd
+            result = self._llvm.ir_builder.add(llvm_lhs, llvm_rhs, "addtmp")
             self.result_stack.append(result)
             return
         elif expr.op_code == "-":
-            result = self._llvm.ir_builder.fsub(llvm_lhs, llvm_rhs, "subtmp")
+            # note: it should be according the datatype,
+            #       e.g. for float it should be fsub
+            result = self._llvm.ir_builder.sub(llvm_lhs, llvm_rhs, "subtmp")
             self.result_stack.append(result)
             return
         elif expr.op_code == "*":
-            result = self._llvm.ir_builder.fmul(llvm_lhs, llvm_rhs, "multmp")
+            # note: it should be according the datatype,
+            #       e.g. for float it should be fmul
+            result = self._llvm.ir_builder.mul(llvm_lhs, llvm_rhs, "multmp")
             self.result_stack.append(result)
             return
         elif expr.op_code == "<":
-            cmp_result = self._llvm.ir_builder.fcmp_unordered(
+            # note: it should be according the datatype,
+            #       e.g. for float it should be fcmp
+            cmp_result = self._llvm.ir_builder.cmp_unordered(
                 "<", llvm_lhs, llvm_rhs, "lttmp"
             )
-            # Convert bool 0/1 to float 0.0 or 1.0
             result = self._llvm.ir_builder.uitofp(
                 cmp_result, self._llvm.INT32_TYPE, "booltmp"
             )
             self.result_stack.append(result)
             return
         elif expr.op_code == ">":
-            cmp_result = self._llvm.ir_builder.fcmp_unordered(
+            # note: it should be according the datatype,
+            #       e.g. for float it should be fcmp
+            cmp_result = self._llvm.ir_builder.cmp_unordered(
                 ">", llvm_lhs, llvm_rhs, "gttmp"
             )
-            # Convert bool 0/1 to float 0.0 or 1.0
             result = self._llvm.ir_builder.uitofp(
                 cmp_result, self._llvm.INT32_TYPE, "booltmp"
             )
@@ -362,7 +370,7 @@ class LLVMLiteIRVisitor(BuilderVisitor):
     def visit(self, expr: ast.ForCountLoop) -> None:
         """Translate ASTx For Range Loop to LLVM-IR."""
         saved_block = self._llvm.ir_builder.block
-        var_addr = self.create_entry_block_alloca(expr.var_name, "float")
+        var_addr = self.create_entry_block_alloca(expr.var_name, "int32")
         self._llvm.ir_builder.position_at_end(saved_block)
 
         # Emit the start code first, without 'variable' in scope.
@@ -419,7 +427,7 @@ class LLVMLiteIRVisitor(BuilderVisitor):
         # Reload, increment, and restore the var_addr. This handles the case
         # where the body of the loop mutates the variable.
         cur_var = self._llvm.ir_builder.load(var_addr, expr.var_name)
-        next_var = self._llvm.ir_builder.fadd(cur_var, step_val, "nextvar")
+        next_var = self._llvm.ir_builder.add(cur_var, step_val, "nextvar")
         self._llvm.ir_builder.store(next_var, var_addr)
 
         # Convert condition to a bool by comparing non-equal to 0.0.
@@ -494,7 +502,8 @@ class LLVMLiteIRVisitor(BuilderVisitor):
     def visit(self, expr: ast.FunctionPrototype) -> None:
         """Translate ASTx Function Prototype to LLVM-IR."""
         args_type = [self._llvm.INT32_TYPE] * len(expr.args)
-        return_type = self._llvm.get_data_type("float")
+        # note: it should be dynamic
+        return_type = self._llvm.get_data_type("int32")
         fn_type = ir.FunctionType(return_type, args_type, False)
 
         fn = ir.Function(self._llvm.module, fn_type, expr.name)
@@ -579,22 +588,10 @@ class LLVMLiteIR(Builder):
         with tempfile.NamedTemporaryFile(suffix="", delete=False) as temp_file:
             self.tmp_path = temp_file.name
 
-        file_path_ll = f"{self.tmp_path}.ll"
         file_path_o = f"{self.tmp_path}.o"
 
-        with open(file_path_ll, "w") as f:
+        with open(file_path_o, "wb") as f:
             f.write(result_object)
-
-        run_command(
-            [
-                "llc",
-                "-filetype=obj",
-                file_path_ll,
-                "-o",
-                file_path_o,
-                # Add other args from self.sh_args if needed
-            ]
-        )
 
         self.output_file = output_file
 
