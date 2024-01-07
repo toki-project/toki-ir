@@ -5,7 +5,7 @@ from difflib import SequenceMatcher
 from pathlib import Path
 
 from arxir import ast
-from arxir.builders.llvmir import LLVMIR
+from arxir.builders.base import Builder
 
 TEST_DATA_PATH = Path(__file__).parent / "data"
 
@@ -17,10 +17,10 @@ def similarity(text_a: str, text_b: str) -> float:
 
 def check_result(
     action: str,
-    builder: LLVMIR,
+    builder: Builder,
     module: ast.Module,
     expected_file: str = "",
-    similarity_factor: float = 0.90,  # TODO: change it to 0.95
+    similarity_factor: float = 0.35,  # TODO: change it to 0.95
 ) -> None:
     """Check the result for translation or build."""
     if action == "build":

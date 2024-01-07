@@ -3,6 +3,16 @@ source_filename = "main.arx"
 target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
 target triple = "x86_64-unknown-linux-gnu"
 
+declare i32 @"putchar"(i32 %".1")
+
+define float @"putchard"(float %".1")
+{
+entry:
+  %"intcast" = fptoui float %".1" to i32
+  %".3" = call i32 @"putchar"(i32 %"intcast")
+  ret float              0x0
+}
+
 define dso_local i32 @add(i32 noundef %0, i32 noundef %1) {
   %3 = alloca i32, align 4
   %4 = alloca i32, align 4
