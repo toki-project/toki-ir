@@ -5,7 +5,7 @@ target triple = "x86_64-unknown-linux-gnu"
 
 declare i32 @"putchar"(i32 %".1")
 
-define float @"putchard"(float %".1")
+define float @"putchard"(i32 %".1")
 {
 entry:
   %"intcast" = fptoui float %".1" to i32

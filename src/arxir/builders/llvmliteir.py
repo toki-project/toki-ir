@@ -1,6 +1,7 @@
 """LLVM-IR builder."""
 from __future__ import annotations
 
+import subprocess
 import tempfile
 
 from typing import Any, Optional, cast
@@ -13,6 +14,15 @@ from plum import dispatch
 
 from arxir import ast
 from arxir.builders.base import Builder, BuilderVisitor
+
+
+def run_command(command: list[str]) -> None:
+    """Run a command in the operating system."""
+    try:
+        subprocess.run(command, check=True)
+    except subprocess.CalledProcessError as e:
+        print(f"An error occurred: {e}")
+        # Handle the error as needed
 
 
 def safe_pop(lst: list[ir.Value | ir.Function]) -> ir.Value | ir.Function:
@@ -145,7 +155,7 @@ class LLVMLiteIRVisitor(BuilderVisitor):
         )
 
         ir_builder.call(putchar, [ival])
-        ir_builder.ret(ir.Constant(self._llvm.FLOAT_TYPE, 0))
+        ir_builder.ret(ir.Constant(self._llvm.INT32_TYPE, 0))
 
     def get_function(self, name: str) -> Optional[ir.Function]:
         """
@@ -256,7 +266,7 @@ class LLVMLiteIRVisitor(BuilderVisitor):
             )
             # Convert bool 0/1 to float 0.0 or 1.0
             result = self._llvm.ir_builder.uitofp(
-                cmp_result, self._llvm.FLOAT_TYPE, "booltmp"
+                cmp_result, self._llvm.INT32_TYPE, "booltmp"
             )
             self.result_stack.append(result)
             return
@@ -266,7 +276,7 @@ class LLVMLiteIRVisitor(BuilderVisitor):
             )
             # Convert bool 0/1 to float 0.0 or 1.0
             result = self._llvm.ir_builder.uitofp(
-                cmp_result, self._llvm.FLOAT_TYPE, "booltmp"
+                cmp_result, self._llvm.INT32_TYPE, "booltmp"
             )
             self.result_stack.append(result)
             return
@@ -295,11 +305,10 @@ class LLVMLiteIRVisitor(BuilderVisitor):
         if not cond_v:
             raise Exception("codegen: Invalid condition expression.")
 
-        # Convert condition to a bool by comparing non-equal to 0.0.
         cond_v = self._llvm.ir_builder.fcmp_ordered(
             "!=",
             cond_v,
-            ir.Constant(self._llvm.FLOAT_TYPE, 0.0),
+            ir.Constant(self._llvm.INT32_TYPE, 0),
         )
 
         # fn = self._llvm.ir_builder.position_at_start().getParent()
@@ -342,7 +351,7 @@ class LLVMLiteIRVisitor(BuilderVisitor):
         # Emit merge block.
         self._llvm.ir_builder.function.basic_blocks.append(merge_bb)
         self._llvm.ir_builder.position_at_start(merge_bb)
-        phi = self._llvm.ir_builder.phi(self._llvm.FLOAT_TYPE, "iftmp")
+        phi = self._llvm.ir_builder.phi(self._llvm.INT32_TYPE, "iftmp")
 
         phi.add_incoming(then_v, then_bb)
         phi.add_incoming(else_v, else_bb)
@@ -399,7 +408,7 @@ class LLVMLiteIRVisitor(BuilderVisitor):
                 return
         else:
             # If not specified, use 1.0.
-            step_val = ir.Constant(self._llvm.FLOAT_TYPE, 1.0)
+            step_val = ir.Constant(self._llvm.INT32_TYPE, 1)
 
         # Compute the end condition.
         self.visit(expr.end)
@@ -417,7 +426,7 @@ class LLVMLiteIRVisitor(BuilderVisitor):
         end_cond = self._llvm.ir_builder.fcmp_ordered(
             "!=",
             end_cond,
-            ir.Constant(self._llvm.DOUBLE_TYPE, 0.0),
+            ir.Constant(self._llvm.INT32_TYPE, 0),
             "loopcond",
         )
 
@@ -439,7 +448,7 @@ class LLVMLiteIRVisitor(BuilderVisitor):
             self.named_values.pop(expr.var_name, None)
 
         # for expr always returns 0.0.
-        result = ir.Constant(self._llvm.FLOAT_TYPE, 0.0)
+        result = ir.Constant(self._llvm.INT32_TYPE, 0)
         self.result_stack.append(result)
 
     @dispatch  # type: ignore[no-redef]
@@ -484,7 +493,7 @@ class LLVMLiteIRVisitor(BuilderVisitor):
     @dispatch  # type: ignore[no-redef]
     def visit(self, expr: ast.FunctionPrototype) -> None:
         """Translate ASTx Function Prototype to LLVM-IR."""
-        args_type = [self._llvm.FLOAT_TYPE] * len(expr.args)
+        args_type = [self._llvm.INT32_TYPE] * len(expr.args)
         return_type = self._llvm.get_data_type("float")
         fn_type = ir.FunctionType(return_type, args_type, False)
 
@@ -513,7 +522,7 @@ class LLVMLiteIRVisitor(BuilderVisitor):
         for llvm_arg in fn.args:
             # Create an alloca for this variable.
             alloca = self._llvm.ir_builder.alloca(
-                self._llvm.FLOAT_TYPE, name=llvm_arg.name
+                self._llvm.INT32_TYPE, name=llvm_arg.name
             )
 
             # Store the initial value into the alloca.
@@ -531,7 +540,7 @@ class LLVMLiteIRVisitor(BuilderVisitor):
             #       could have multiples returns
             self._llvm.ir_builder.ret(retval[-1])
         else:
-            self._llvm.ir_builder.ret(ir.Constant(self._llvm.FLOAT_TYPE, 0))
+            self._llvm.ir_builder.ret(ir.Constant(self._llvm.INT32_TYPE, 0))
 
         self.result_stack.append(fn)
 
@@ -558,11 +567,14 @@ class LLVMLiteIR(Builder):
     def __init__(self) -> None:
         """Initialize LLVMIR."""
         super().__init__()
-        self.translator: BuilderVisitor = LLVMLiteIRVisitor()
+        self.translator: LLVMLiteIRVisitor = LLVMLiteIRVisitor()
 
     def build(self, expr: ast.AST, output_file: str) -> None:
         """Transpile the ASTx to LLVM-IR and build it to an executable file."""
         result = self.translate(expr)
+
+        result_mod = llvm.parse_assembly(result)
+        result_object = self.translator.target_machine.emit_object(result_mod)
 
         with tempfile.NamedTemporaryFile(suffix="", delete=False) as temp_file:
             self.tmp_path = temp_file.name
@@ -571,19 +583,29 @@ class LLVMLiteIR(Builder):
         file_path_o = f"{self.tmp_path}.o"
 
         with open(file_path_ll, "w") as f:
-            f.write(result)
+            f.write(result_object)
 
-        sh.llc(
+        run_command(
             [
+                "llc",
                 "-filetype=obj",
                 file_path_ll,
                 "-o",
                 file_path_o,
-            ],
-            **self.sh_args,
+                # Add other args from self.sh_args if needed
+            ]
         )
+
         self.output_file = output_file
-        sh.clang([file_path_o, "-o", self.output_file], **self.sh_args)
+
+        run_command(
+            [
+                "clang",
+                file_path_o,
+                "-o",
+                self.output_file,
+            ]
+        )
 
     def run(self) -> None:
         """Run the generated executable."""
