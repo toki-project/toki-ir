@@ -32,8 +32,8 @@ class BuilderVisitor:
         raise Exception("Not implemented yet.")
 
     @dispatch  # type: ignore[no-redef]
-    def visit(self, expr: ast.Call) -> None:
-        """Translate an ASTx Call expression."""
+    def visit(self, expr: ast.FunctionCall) -> None:
+        """Translate an ASTx FunctionCall expression."""
         raise Exception("Not implemented yet.")
 
     @dispatch  # type: ignore[no-redef]
@@ -47,13 +47,13 @@ class BuilderVisitor:
         raise Exception("Not implemented yet.")
 
     @dispatch  # type: ignore[no-redef]
-    def visit(self, expr: ast.Return) -> None:
-        """Translate an ASTx Return expression."""
+    def visit(self, expr: ast.FunctionReturn) -> None:
+        """Translate an ASTx FunctionReturn expression."""
         raise Exception("Not implemented yet.")
 
     @dispatch  # type: ignore[no-redef]
-    def visit(self, expr: ast.Int32Literal) -> None:
-        """Translate an ASTx Int32Literal expression."""
+    def visit(self, expr: ast.LiteralInt32) -> None:
+        """Translate an ASTx LiteralInt32 expression."""
         raise Exception("Not implemented yet.")
 
     @dispatch  # type: ignore[no-redef]

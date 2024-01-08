@@ -13,15 +13,15 @@ from .conftest import check_result
 @pytest.fixture
 def fn_add() -> ast.AST:
     """Create a fixture for a function `add`."""
-    var_a = ast.Variable(name="a", type_=ast.Int32, value=ast.Int32Literal(1))
-    var_b = ast.Variable(name="b", type_=ast.Int32, value=ast.Int32Literal(2))
+    var_a = ast.Variable(name="a", type_=ast.Int32, value=ast.LiteralInt32(1))
+    var_b = ast.Variable(name="b", type_=ast.Int32, value=ast.LiteralInt32(2))
 
     proto = ast.FunctionPrototype(
         name="add", args=[var_a, var_b], return_type=ast.Int32
     )
     block = ast.Block()
     var_sum = var_a + var_b
-    block.append(ast.Return(var_sum))
+    block.append(ast.FunctionReturn(var_sum))
     return ast.Function(prototype=proto, body=block)
 
 
@@ -81,7 +81,7 @@ def test_module_fn_main(
         name="main", args=[], return_type=ast.Int32
     )
     main_block = ast.Block()
-    main_block.append(ast.Return(ast.Int32Literal(0)))
+    main_block.append(ast.FunctionReturn(ast.LiteralInt32(0)))
     main_fn = ast.Function(prototype=main_proto, body=main_block)
 
     module.block.append(main_fn)

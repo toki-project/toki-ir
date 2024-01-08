@@ -10,10 +10,10 @@ from astx.base import (
     StatementType,
 )
 from astx.callables import (
-    Call,
     Function,
+    FunctionCall,
     FunctionPrototype,
-    Return,
+    FunctionReturn,
 )
 from astx.datatypes import (
     Boolean,
@@ -25,10 +25,10 @@ from astx.datatypes import (
     Int8,
     Int16,
     Int32,
-    Int32Literal,
     Int64,
     Integer,
     Literal,
+    LiteralInt32,
     Number,
     SignedInteger,
 )
@@ -68,10 +68,10 @@ __all__ = [
     "OperatorType",
     "SourceLocation",
     "StatementType",
-    "Call",
+    "FunctionCall",
     "Function",
     "FunctionPrototype",
-    "Return",
+    "FunctionReturn",
     "Boolean",
     "DataTypeOps",
     "Float16",
@@ -81,7 +81,7 @@ __all__ = [
     "Int8",
     "Int16",
     "Int32",
-    "Int32Literal",
+    "LiteralInt32",
     "Int64",
     "Integer",
     "Literal",

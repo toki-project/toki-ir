@@ -11,6 +11,7 @@ import sh
 from llvmlite import binding as llvm
 from llvmlite import ir
 from plum import dispatch
+from public import public
 
 from irx import ast
 from irx.builders.base import Builder, BuilderVisitor
@@ -370,7 +371,100 @@ class LLVMLiteIRVisitor(BuilderVisitor):
     def visit(self, expr: ast.ForCountLoop) -> None:
         """Translate ASTx For Range Loop to LLVM-IR."""
         saved_block = self._llvm.ir_builder.block
-        var_addr = self.create_entry_block_alloca(expr.var_name, "int32")
+        var_addr = self.create_entry_block_alloca("for_count_loop", "int32")
+        self._llvm.ir_builder.position_at_end(saved_block)
+
+        # Emit the start code first, without 'variable' in scope.
+        self.visit(expr.initializer)
+        initializer_val = self.result_stack.pop()
+        if not initializer_val:
+            raise Exception("codegen: Invalid start argument.")
+
+        # Store the value into the alloca.
+        self._llvm.ir_builder.store(initializer_val, var_addr)
+
+        # Make the new basic block for the loop header, inserting after
+        # current block.
+        loop_bb = self._llvm.ir_builder.function.append_basic_block("loop")
+
+        # Insert an explicit fall through from the current block to the
+        # loop_bb.
+        self._llvm.ir_builder.branch(loop_bb)
+
+        # Start insertion in loop_bb.
+        self._llvm.ir_builder.position_at_start(loop_bb)
+
+        # Within the loop, the variable is defined equal to the PHI node.
+        # If it shadows an existing variable, we have to restore it, so save
+        # it now.
+        old_val = self.named_values.get(expr.var_name)
+        self.named_values[expr.var_name] = var_addr
+
+        # Emit the body of the loop. This, like any other expr, can change
+        # the current basic_block. Note that we ignore the value computed by
+        # the body, but don't allow an error.
+        self.visit(expr.body)
+        body_val = self.result_stack.pop()
+
+        if not body_val:
+            return
+
+        # Emit the step value.
+        if expr.step:
+            self.visit(expr.step)
+            step_val = self.result_stack.pop()
+            if not step_val:
+                return
+        else:
+            # If not specified, use 1.0.
+            step_val = ir.Constant(self._llvm.INT32_TYPE, 1)
+
+        # Compute the end condition.
+        self.visit(expr.end)
+        end_cond = self.result_stack.pop()
+        if not end_cond:
+            return
+
+        # Reload, increment, and restore the var_addr. This handles the case
+        # where the body of the loop mutates the variable.
+        cur_var = self._llvm.ir_builder.load(var_addr, expr.var_name)
+        next_var = self._llvm.ir_builder.add(cur_var, step_val, "nextvar")
+        self._llvm.ir_builder.store(next_var, var_addr)
+
+        # Convert condition to a bool by comparing non-equal to 0.0.
+        end_cond = self._llvm.ir_builder.fcmp_ordered(
+            "!=",
+            end_cond,
+            ir.Constant(self._llvm.INT32_TYPE, 0),
+            "loopcond",
+        )
+
+        # Create the "after loop" block and insert it.
+        after_bb = self._llvm.ir_builder.function.append_basic_block(
+            "afterloop"
+        )
+
+        # Insert the conditional branch into the end of loop_bb.
+        self._llvm.ir_builder.cbranch(end_cond, loop_bb, after_bb)
+
+        # Any new code will be inserted in after_bb.
+        self._llvm.ir_builder.position_at_start(after_bb)
+
+        # Restore the unshadowed variable.
+        if old_val:
+            self.named_values[expr.var_name] = old_val
+        else:
+            self.named_values.pop(expr.var_name, None)
+
+        # for expr always returns 0.0.
+        result = ir.Constant(self._llvm.INT32_TYPE, 0)
+        self.result_stack.append(result)
+
+    @dispatch  # type: ignore[no-redef]
+    def visit(self, expr: ast.ForRangeLoop) -> None:
+        """Translate ASTx For Range Loop to LLVM-IR."""
+        saved_block = self._llvm.ir_builder.block
+        var_addr = self.create_entry_block_alloca("for_count_loop", "int32")
         self._llvm.ir_builder.position_at_end(saved_block)
 
         # Emit the start code first, without 'variable' in scope.
@@ -460,25 +554,20 @@ class LLVMLiteIRVisitor(BuilderVisitor):
         self.result_stack.append(result)
 
     @dispatch  # type: ignore[no-redef]
-    def visit(self, expr: ast.ForRangeLoop) -> None:
-        """Translate ASTx For Range Loop to LLVM-IR."""
-        return
-
-    @dispatch  # type: ignore[no-redef]
     def visit(self, expr: ast.Module) -> None:
         """Translate ASTx Module to LLVM-IR."""
         for node in expr.nodes:
             self.visit(node)
 
     @dispatch  # type: ignore[no-redef]
-    def visit(self, expr: ast.Int32Literal) -> None:
-        """Translate ASTx Int32Literal to LLVM-IR."""
+    def visit(self, expr: ast.LiteralInt32) -> None:
+        """Translate ASTx LiteralInt32 to LLVM-IR."""
         result = ir.Constant(self._llvm.INT32_TYPE, expr.value)
         self.result_stack.append(result)
 
     @dispatch  # type: ignore[no-redef]
-    def visit(self, expr: ast.Call) -> None:
-        """Translate Function Call."""
+    def visit(self, expr: ast.FunctionCall) -> None:
+        """Translate Function FunctionCall."""
         callee_f = self.get_function(expr.callee)
 
         if not callee_f:
@@ -554,8 +643,8 @@ class LLVMLiteIRVisitor(BuilderVisitor):
         self.result_stack.append(fn)
 
     @dispatch  # type: ignore[no-redef]
-    def visit(self, expr: ast.Return) -> None:
-        """Translate ASTx Return to LLVM-IR."""
+    def visit(self, expr: ast.FunctionReturn) -> None:
+        """Translate ASTx FunctionReturn to LLVM-IR."""
         self.visit(expr.value)
 
     @dispatch  # type: ignore[no-redef]
@@ -570,6 +659,7 @@ class LLVMLiteIRVisitor(BuilderVisitor):
         self.result_stack.append(result)
 
 
+@public
 class LLVMLiteIR(Builder):
     """LLVM-IR transpiler and compiler."""
 

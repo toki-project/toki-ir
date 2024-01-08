@@ -135,11 +135,11 @@ extra:
     - icon: fontawesome/brands/twitter
       link: https://twitter.com/xmnlab
     - icon: fontawesome/brands/github
-      link: https://github.com/arx-project/irx
+      link: https://github.com/arxlang/irx
   support_levels:
     supported:
       icon: :material-check-decagram:{ .verified }
-      description: Tested in CI. If this doesn't work for you, please [file an issue](https://github.com/arx-project/irx/issues/new).
+      description: Tested in CI. If this doesn't work for you, please [file an issue](https://github.com/arxlang/irx/issues/new).
     bug:
       icon: :material-bug:{ .bug }
       description: Should work but doesn't because upstream is broken. Supported on a best-effort basis.

@@ -12,5 +12,5 @@ dependencies:
   - nodejs # used by semantic-release
   - shellcheck
   - pip:
-      # fix issues with distlib
-      - paginate
+    # fix issues with distlib
+    - paginate
