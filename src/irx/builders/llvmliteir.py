@@ -12,8 +12,8 @@ from llvmlite import binding as llvm
 from llvmlite import ir
 from plum import dispatch
 
-from arxir import ast
-from arxir.builders.base import Builder, BuilderVisitor
+from irx import ast
+from irx.builders.base import Builder, BuilderVisitor
 
 
 def run_command(command: list[str]) -> None:

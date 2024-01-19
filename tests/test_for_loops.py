@@ -3,9 +3,9 @@
 
 # import pytest
 
-# from arxir import ast
-# from arxir.builders.base import Builder
-# from arxir.builders.llvmliteir import LLVMLiteIR
+# from irx import ast
+# from irx.builders.base import Builder
+# from irx.builders.llvmliteir import LLVMLiteIR
 
 # from .conftest import check_result
 

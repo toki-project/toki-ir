@@ -57,7 +57,7 @@ groups:
       emit-ir:
         help: |
           build llvm-ir from a c code in order to use the result to compare
-          with arx-ir result
+          with irx result
         run: |
           mkdir -p ./tmp
           cd tmp

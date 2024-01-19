@@ -1,12 +1,12 @@
 ![LOGO](/images/logo.png)
 
-# Arx-IR
+# IRx
 
 OSL Python Package contains all the boilerplate you need to create a Python
 package.
 
 - License: BSD 3 Clause
-- Documentation: https://arx-ir.github.io
+- Documentation: https://irx.github.io
 
 ## Features
 

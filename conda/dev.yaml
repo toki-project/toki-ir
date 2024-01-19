@@ -1,4 +1,4 @@
-name: arx-ir
+name: irx
 channels:
   - nodefaults
   - conda-forge

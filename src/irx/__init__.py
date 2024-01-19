@@ -1,4 +1,4 @@
-"""Top-level package for Arx-IR."""
+"""Top-level package for IRx."""
 
 __author__ = """Ivan Ogasawara"""
 __email__ = "ivan.ogasawara@gmail.com"

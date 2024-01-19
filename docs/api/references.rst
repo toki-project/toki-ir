@@ -1,8 +1,8 @@
 API references
 ==============
 
-.. automodule:: arxir
+.. automodule:: irx
     :members:
 
-.. automodule:: arxir.arxir
+.. automodule:: irx.irx
     :members:

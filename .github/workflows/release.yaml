@@ -27,7 +27,7 @@ jobs:
           environment-file: conda/dev.yaml
           channels: conda-forge,nodefaults
           channel-priority: true
-          activate-environment: arx-ir
+          activate-environment: irx
           use-mamba: true
           miniforge-variant: Mambaforge
 

@@ -53,7 +53,7 @@ from astx.variables import (
     Variable,
 )
 
-from arxir.ast.blocks import (
+from irx.ast.blocks import (
     Block,
     Module,
     Target,
