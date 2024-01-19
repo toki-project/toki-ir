@@ -1,39 +1,18 @@
-![LOGO](/images/logo.png)
-
 # IRx
 
-OSL Python Package contains all the boilerplate you need to create a Python
-package.
+**IRx** aims to provide a translator to LLVM-IR from
+[**ASTx**](https://github.com/arxlang/astx) objects.
 
-- License: BSD 3 Clause
-- Documentation: https://irx.github.io
+**ASTx** is a generic project that offers a way to compound in an expressive way
+an **AST**. It is not specific for the **ArxLang** project, although it is main
+focus is to provide all needed feature for it.
+
+**IRx** uses **llvmlite** in order to generate **LLVM-IR** source, in another
+words.
+
+- Free software: BSD 3 Clause
+- Documentation: https://arxlang.github.io/irx.
 
 ## Features
 
-- The security of our code: Bandit is a powerful tool that we use in our Python
-  project to ensure its security. This tool analyzes the code and detects
-  potential vulnerabilities. Some of the key features of Bandit are its ease of
-  use, its ability to integrate with other tools, and its support for multiple
-  Python versions. If you want to know about bandit you can check its
-  [documentation](https://bandit.readthedocs.io/en/latest/).
-
-- Finds unused code: [Vulture](https://github.com/jendrikseipp/vulture) is
-  useful for cleaning up and finding errors in large code bases in Python.
-
-- Complexity of functions and modules: We use
-  [McCabe](https://github.com/PyCQA/mccabe) to identify the complexity in our
-  Python code that may be difficult to maintain or understand. By identifying
-  complex code at the outset, we as developers can refactor it to make it easier
-  to maintain and understand. In summary, McCabe helps us to improve the quality
-  of our code and make it easier to maintain. If you would like to learn more
-  about McCabe and code complexity, you can visit
-  [McCabe - Code Complexity Checker](https://here-be-pythons.readthedocs.io/en/latest/python/mccabe.html).
-  This tool is included with [Flake8](https://flake8.pycqa.org/en/latest/).
-
-- TODO
-
-## Credits
-
-This package was created with Cookieninja and the
-[osl-incubator/scicookie](https://github.com/osl-incubator/scicookie) project
-template.
+- Generate **LLVM-IR** from **ASTx**

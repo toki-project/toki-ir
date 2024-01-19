@@ -2,6 +2,7 @@
 name = "pyirx"
 version = "1.0.0"  # semantic-release
 description = "IRx"
+readme = "docs/index.md"
 authors = ["Ivan Ogasawara <ivan.ogasawara@gmail.com>"]
 license = "BSD 3 Clause"
 exclude = [
