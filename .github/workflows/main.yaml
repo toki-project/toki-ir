@@ -69,45 +69,45 @@ jobs:
       - name: Run tests
         run: makim tests.unit
 
-linter-and-docs:
-  needs: check-branch
-  runs-on: ubuntu-latest
-  timeout-minutes: 10
+  linter-and-docs:
+    needs: check-branch
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
 
-  defaults:
-    run:
-      shell: bash -l {0}
+    defaults:
+      run:
+        shell: bash -l {0}
 
-  concurrency:
-    group: ci-linter-docs-${{ github.ref }}
-    cancel-in-progress: true
+    concurrency:
+      group: ci-linter-docs-${{ github.ref }}
+      cancel-in-progress: true
 
-  steps:
-    - uses: actions/checkout@v3
+    steps:
+      - uses: actions/checkout@v3
 
-    - uses: conda-incubator/setup-miniconda@v3
-      with:
-        miniconda-version: "latest"
-        environment-file: conda/dev.yaml
-        channels: conda-forge,nodefaults
-        activate-environment: irx
-        auto-update-conda: true
-        conda-solver: libmamba
+      - uses: conda-incubator/setup-miniconda@v3
+        with:
+          miniconda-version: "latest"
+          environment-file: conda/dev.yaml
+          channels: conda-forge,nodefaults
+          activate-environment: irx
+          auto-update-conda: true
+          conda-solver: libmamba
 
-    - name: Install dependencies
-      run: |
-        poetry config virtualenvs.create false
-        poetry install
+      - name: Install dependencies
+        run: |
+          poetry config virtualenvs.create false
+          poetry install
 
-    - name: Test documentation generation
-      run: makim docs.build
+      - name: Test documentation generation
+        run: makim docs.build
 
-    - name: Run style checks
-      if: success() || failure()
-      run: |
-        pre-commit install
-        makim tests.linter
+      - name: Run style checks
+        if: success() || failure()
+        run: |
+          pre-commit install
+          makim tests.linter
 
-    - name: Setup tmate session
-      if: "${{ failure() && (contains(github.event.pull_request.labels.*.name, 'ci:enable-debugging')) }}"
-      uses: mxschmitt/action-tmate@v3
+      - name: Setup tmate session
+        if: "${{ failure() && (contains(github.event.pull_request.labels.*.name, 'ci:enable-debugging')) }}"
+        uses: mxschmitt/action-tmate@v3
