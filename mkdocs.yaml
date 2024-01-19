@@ -1,8 +1,8 @@
-site_name: Arx-IR
-site_url: https://arx-project.github.io/arx-ir
-repo_url: https://github.com/arx-project/arx-ir
-docs_dir: ./
-site_dir: ../build
+site_name: IRx
+site_url: https://arx-project.github.io/irx
+repo_url: https://github.com/arx-project/irx
+docs_dir: ./docs
+site_dir: ./build
 # extra_css:
 #   - stylesheets/extra.css
 # Page tree
@@ -123,7 +123,7 @@ markdown_extensions:
   - tables
   - toc
 extra:
-  project_name: "Arx-IR"
+  project_name: "IRx"
   team:
     - name: "Active maintainers"
       members:
@@ -135,11 +135,11 @@ extra:
     - icon: fontawesome/brands/twitter
       link: https://twitter.com/xmnlab
     - icon: fontawesome/brands/github
-      link: https://github.com/arx-project/arx-ir
+      link: https://github.com/arx-project/irx
   support_levels:
     supported:
       icon: :material-check-decagram:{ .verified }
-      description: Tested in CI. If this doesn't work for you, please [file an issue](https://github.com/arx-project/arx-ir/issues/new).
+      description: Tested in CI. If this doesn't work for you, please [file an issue](https://github.com/arx-project/irx/issues/new).
     bug:
       icon: :material-bug:{ .bug }
       description: Should work but doesn't because upstream is broken. Supported on a best-effort basis.
@@ -147,4 +147,4 @@ extra:
       icon: :material-cancel:{ .cancel }
       description: Unlikely to ever be supported or no upstream support.
 
-copyright: "Copyright &copy; 2022, Arx-IR Team"
+copyright: "Copyright &copy; 2022, IRx Team"

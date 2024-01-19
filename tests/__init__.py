@@ -1,1 +1,1 @@
-"""Unit test package for arxir-ir."""
+"""Unit test package for irx-ir."""

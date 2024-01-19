@@ -1,3 +1,3 @@
 # Api references
 
-::: arxir
+::: irx

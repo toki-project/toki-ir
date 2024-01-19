@@ -1,4 +1,4 @@
-- Arx-IR version:
+- IRx version:
 - Python version:
 - Operating System:
 

@@ -7,9 +7,9 @@ dependencies:
   - clangdev 14.*
   - graphviz
   - pip
+  - python >=3.8.1,<3.12
   - poetry >=1.5
-  - python 3.8.1,<3.12
-  - nodejs # used by semantic-release
+  - nodejs >=18.17 # used by semantic-release
   - shellcheck
   - pip:
       # fix issues with distlib

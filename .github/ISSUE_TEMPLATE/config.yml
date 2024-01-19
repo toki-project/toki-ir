@@ -2,14 +2,14 @@
 blank_issues_enabled: true
 contact_links:
   - name: 🙋  Usage Questions
-    url: https://github.com/arx-ir/discussions
+    url: https://github.com/irx/discussions
     about: |
-      Use Arx-IR's GitHub Discussions to ask "How do I do X with Cookiecutter?".
+      Use IRx's GitHub Discussions to ask "How do I do X with Cookiecutter?".
   - name: 📖  Tutorial
-    url: https://github.com/arx-ir
+    url: https://github.com/irx
     about: |
-      The Arx-IR tutorial is continually updated and provides an in depth walkthrough
+      The IRx tutorial is continually updated and provides an in depth walkthrough
       of how to use the latest release of Cookiecutter.
-  - name: 📝  Arx-IR Code of Conduct
-    url: https://github.com/arx-ir/coc/CODE_OF_CONDUCT.md
+  - name: 📝  IRx Code of Conduct
+    url: https://github.com/irx/coc/CODE_OF_CONDUCT.md
     about: Expectations for how people will interact with each other on Cookiecutter's GitHub.

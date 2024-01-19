@@ -1,4 +1,4 @@
-"""Define the public arxir API."""
+"""Define the public irx API."""
 from __future__ import annotations
 
 import os
@@ -9,7 +9,7 @@ from typing import Any, Dict
 
 from plum import dispatch
 
-from arxir import ast
+from irx import ast
 
 
 class BuilderVisitor:

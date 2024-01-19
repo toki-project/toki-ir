@@ -4,8 +4,8 @@ import tempfile
 from difflib import SequenceMatcher
 from pathlib import Path
 
-from arxir import ast
-from arxir.builders.base import Builder
+from irx import ast
+from irx.builders.base import Builder
 
 TEST_DATA_PATH = Path(__file__).parent / "data"
 
