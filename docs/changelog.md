@@ -1,6 +1,13 @@
 # Release Notes
 ---
 
+## [1.0.1](https://github.com/arxlang/irx/compare/1.0.0...1.0.1) (2024-01-19)
+
+
+### Bug Fixes
+
+* Fix documentation publishing ([#10](https://github.com/arxlang/irx/issues/10)) ([3ce6c3d](https://github.com/arxlang/irx/commit/3ce6c3d2a188764a944cc1d8af955028ec3b61f4))
+
 # 1.0.0 (2024-01-19)
 
 
