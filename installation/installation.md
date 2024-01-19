@@ -5,7 +5,7 @@
 To install IRx, run this command in your terminal:
 
 ```bash
-$ pip install irx
+$ pip install pyirx
 ```
 
 This is the preferred method to install IRx, as it will always install the most
