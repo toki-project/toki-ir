@@ -84,10 +84,12 @@ jobs:
           activate-environment: irx
           auto-update-conda: true
           conda-solver: libmamba
-          python-version: ${{ matrix.python-version }}
+          python-version: ${{ matrix.python_version }}
 
       - name: Install dependencies
-        run: poetry install
+        run: |
+          poetry check
+          poetry install
 
       - name: Run tests
         run: makim tests.unit
