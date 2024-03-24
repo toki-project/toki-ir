@@ -290,12 +290,30 @@ class LLVMLiteIRVisitor(BuilderVisitor):
             )
             self.result_stack.append(result)
             return
+        elif expr.op_code == "/":
+            # Check the datatype to decide between floating-point and integer
+            # division
+            if self._llvm.FLOAT_TYPE in (llvm_lhs.type, llvm_rhs.type):
+                # Floating-point division
+                result = self._llvm.ir_builder.fdiv(
+                    llvm_lhs, llvm_rhs, "divtmp"
+                )
+            else:
+                # Assuming the division is signed by default. Use `udiv` for
+                # unsigned division.
+                result = self._llvm.ir_builder.sdiv(
+                    llvm_lhs, llvm_rhs, "divtmp"
+                )
+            self.result_stack.append(result)
+            return
 
-        # If it wasn't a builtin binary operator, it must be a user defined
-        # one. Emit a call to it.
-        fn = self.get_function("binary" + expr.op_code)
-        result = self._llvm.ir_builder.call(fn, [llvm_lhs, llvm_rhs], "binop")
-        self.result_stack.append(result)
+        # # If it wasn't a builtin binary operator, it must be a user defined
+        raise Exception(f"Binary op {expr.op_code} not implemented yet.")
+        # # one. Emit a call to it.
+        # fn = self.get_function("binary" + expr.op_code)
+        # result = self._llvm.ir_builder.call(
+        #   fn, [llvm_lhs, llvm_rhs], "binop")
+        # self.result_stack.append(result)
 
     @dispatch  # type: ignore[no-redef]
     def visit(self, block: ast.Block) -> None:
@@ -303,7 +321,11 @@ class LLVMLiteIRVisitor(BuilderVisitor):
         result = []
         for node in block.nodes:
             self.visit(node)
-            result.append(self.result_stack.pop())
+            try:
+                result.append(self.result_stack.pop())
+            except IndexError:
+                # some nodes doesn't add anything in the stack
+                pass
         self.result_stack.append(result)
 
     @dispatch  # type: ignore[no-redef]
@@ -658,6 +680,40 @@ class LLVMLiteIRVisitor(BuilderVisitor):
 
         result = self._llvm.ir_builder.load(expr_var, expr.name)
         self.result_stack.append(result)
+
+    @dispatch  # type: ignore[no-redef]
+    def visit(self, expr: ast.VariableDeclaration) -> None:
+        """Translate ASTx Variable to LLVM-IR."""
+        if self.named_values.get(expr.name):
+            raise Exception(f"Variable already declared: {expr.name}")
+
+        # Emit the initializer
+        if expr.value is not None:
+            self.visit(expr.value)
+            init_val = self.result_stack.pop()
+            if init_val is None:
+                raise Exception("Initializer code generation failed.")
+        else:
+            # If not specified, use 0 as the initializer.
+            # note: it should create something according to the defined type
+            init_val = ir.Constant(self._llvm.get_data_type("int32"), 0)
+
+        # Create an alloca in the entry block.
+        # note: it should create the type according to the defined type
+        alloca = self.create_entry_block_alloca(expr.name, "int32")
+
+        # Move back to the end of the function to continue IR generation.
+        # builder.position_at_end(function.blocks[-1])
+
+        # Store the initial value.
+        self._llvm.ir_builder.store(init_val, alloca)
+
+        # Remember the old variable binding so that we can restore the binding
+        # when we unrecurse.
+        # old_bindings.append(named_values.get(var_name))
+
+        # Remember this binding.
+        self.named_values[expr.name] = alloca
 
 
 @public

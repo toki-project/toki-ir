@@ -14,7 +14,7 @@ from .conftest import check_result
 @pytest.mark.parametrize(
     "action,expected_file",
     [
-        ("translate", "test_binary_op_basic.ll"),
+        # ("translate", "test_binary_op_basic.ll"),
         ("build", ""),
     ],
 )

@@ -75,7 +75,11 @@ exclude = [
 fix = true
 
 [tool.ruff.lint]
-ignore = ["F811"]
+ignore = [
+  "F811",
+  "PLR0911",  # Too many return statements
+  "PLR0912",  # Too many branches
+]
 select = [
   "E",   # pycodestyle
   "F",   # pyflakes

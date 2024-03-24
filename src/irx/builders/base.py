@@ -97,6 +97,11 @@ class BuilderVisitor:
         """Translate an ASTx Variable expression."""
         raise Exception("Not implemented yet.")
 
+    @dispatch  # type: ignore[no-redef]
+    def visit(self, expr: ast.VariableDeclaration) -> None:
+        """Translate an ASTx VariableDeclaration expression."""
+        raise Exception("Not implemented yet.")
+
 
 class Builder(ABC):
     """ASTx Builder."""
