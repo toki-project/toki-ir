@@ -18,18 +18,18 @@ can guide you through the process.
 ## From sources
 
 The sources for IRx can be downloaded from the
-[Github repo](https://github.com/arx-project/irx).
+[Github repo](https://github.com/arxlang/irx).
 
 You can either clone the public repository:
 
 ```bash
-$ git clone https://github.com/arx-project/irx
+$ git clone https://github.com/arxlang/irx
 ```
 
-Or download the [tarball](https://github.com/arx-project/irx/tarball/main):
+Or download the [tarball](https://github.com/arxlang/irx/tarball/main):
 
 ```bash
-$ curl -OJL https://github.com/arx-project/irx/tarball/main
+$ curl -OJL https://github.com/arxlang/irx/tarball/main
 ```
 
 Once you have a copy of the source, you can install it with:

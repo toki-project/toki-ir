@@ -24,7 +24,7 @@ You can contribute in many ways:
 
 ### Report Bugs
 
-Report bugs at https://github.com/arx-project/irx/issues.
+Report bugs at https://github.com/arxlang/irx/issues.
 
 If you are reporting a bug, please include:
 
@@ -50,7 +50,7 @@ docs, in docstrings, or even on the web in blog posts, articles, and such.
 ### Submit Feedback
 
 The best way to send feedback is to file an issue at
-https://github.com/arx-project/irx/issues.
+https://github.com/arxlang/irx/issues.
 
 If you are proposing a feature:
 
