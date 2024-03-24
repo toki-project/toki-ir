@@ -429,8 +429,8 @@ class LLVMLiteIRVisitor(BuilderVisitor):
         # Within the loop, the variable is defined equal to the PHI node.
         # If it shadows an existing variable, we have to restore it, so save
         # it now.
-        old_val = self.named_values.get(expr.var_name)
-        self.named_values[expr.var_name] = var_addr
+        old_val = self.named_values.get(expr.initializer.name)
+        self.named_values[expr.initializer.name] = var_addr
 
         # Emit the body of the loop. This, like any other expr, can change
         # the current basic_block. Note that we ignore the value computed by
@@ -459,7 +459,7 @@ class LLVMLiteIRVisitor(BuilderVisitor):
 
         # Reload, increment, and restore the var_addr. This handles the case
         # where the body of the loop mutates the variable.
-        cur_var = self._llvm.ir_builder.load(var_addr, expr.var_name)
+        cur_var = self._llvm.ir_builder.load(var_addr, expr.initializer.name)
         next_var = self._llvm.ir_builder.add(cur_var, step_val, "nextvar")
         self._llvm.ir_builder.store(next_var, var_addr)
 
@@ -491,9 +491,9 @@ class LLVMLiteIRVisitor(BuilderVisitor):
 
         # Restore the unshadowed variable.
         if old_val:
-            self.named_values[expr.var_name] = old_val
+            self.named_values[expr.initializer.name] = old_val
         else:
-            self.named_values.pop(expr.var_name, None)
+            self.named_values.pop(expr.initializer.name, None)
 
         # for expr always returns 0.0.
         result = ir.Constant(self._llvm.INT32_TYPE, 0)
@@ -711,6 +711,8 @@ class LLVMLiteIRVisitor(BuilderVisitor):
         alloca = self.create_entry_block_alloca(expr.name, "int32")
         self._llvm.ir_builder.store(init_val, alloca)
         self.named_values[expr.name] = alloca
+
+        self.result_stack.append(init_val)
 
     @dispatch  # type: ignore[no-redef]
     def visit(self, expr: ast.Variable) -> None:

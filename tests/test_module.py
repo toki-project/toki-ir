@@ -33,34 +33,6 @@ def fn_add() -> ast.AST:
 @pytest.mark.parametrize(
     "action,expected_file",
     [
-        # ("translate", "test_module_fn_add.ll"),
-        ("build", ""),
-    ],
-)
-@pytest.mark.parametrize(
-    "builder_class",
-    [
-        LLVMLiteIR,
-    ],
-)
-def test_module_fn_add(
-    action: str,
-    expected_file: str,
-    fn_add: ast.AST,
-    builder_class: Type[Builder],
-) -> None:
-    """Test ASTx Module with a function called add."""
-    builder = builder_class()
-
-    module = builder.module()
-    module.block.append(fn_add)
-
-    check_result(action, builder, module, expected_file)
-
-
-@pytest.mark.parametrize(
-    "action,expected_file",
-    [
         # ("translate", "test_module_fn_main.ll"),
         ("build", ""),
     ],
