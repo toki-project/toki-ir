@@ -1,6 +1,13 @@
 # Release Notes
 ---
 
+# [1.1.0](https://github.com/arxlang/irx/compare/1.0.2...1.1.0) (2024-03-24)
+
+
+### Features
+
+* Improve a several things: documentation, tests, CI, and the usage of ASTx ([#8](https://github.com/arxlang/irx/issues/8)) ([63393ff](https://github.com/arxlang/irx/commit/63393ff02fee059174474876a334623a4e23204f))
+
 ## [1.0.2](https://github.com/arxlang/irx/compare/1.0.1...1.0.2) (2024-01-19)
 
 
