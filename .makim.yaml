@@ -38,7 +38,7 @@ groups:
             help: Specify parameters to be used for tests
             type: string
             default: "-vv"
-        run: pytest -s {{ args.path }} {{ args.params }}
+        run: pytest -s ${{ args.path }} ${{ args.params }}
 
       ci:
         help: run the sames tests executed on CI
@@ -72,8 +72,8 @@ groups:
             type: string
             required: true
         run: |
-          llc -filetype=obj {{ args.file }}.ll -o {{ args.file }}.o
-          clang {{ args.file }}.o -o {{ args.file }}
+          llc -filetype=obj ${{ args.file }}.ll -o ${{ args.file }}.o
+          clang ${{ args.file }}.o -o ${{ args.file }}
 
   docs:
     targets:
@@ -81,6 +81,7 @@ groups:
         help: build documentation
         run: |
           mkdocs build --config-file mkdocs.yaml
+          echo "irx.arxlang.org" > ./build/CNAME
 
       preview:
         help: preview documentation page locally
@@ -104,9 +105,9 @@ groups:
     targets:
       ci:
         help: run semantic release on CI
-        run: {{ vars.app }} --ci
+        run: ${{ vars.app }} --ci
 
       dry:
         help: run semantic release in dry-run mode
         run: |
-          {{ vars.app }} --dry-run
+          ${{ vars.app }} --dry-run

@@ -1,4 +1,5 @@
 """General configuration module for pytest."""
+
 import tempfile
 
 from difflib import SequenceMatcher

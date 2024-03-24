@@ -1,4 +1,5 @@
 """ASTx module."""
+
 from astx.base import (
     AST,
     ASTKind,
@@ -10,10 +11,10 @@ from astx.base import (
     StatementType,
 )
 from astx.callables import (
-    Call,
     Function,
+    FunctionCall,
     FunctionPrototype,
-    Return,
+    FunctionReturn,
 )
 from astx.datatypes import (
     Boolean,
@@ -25,10 +26,10 @@ from astx.datatypes import (
     Int8,
     Int16,
     Int32,
-    Int32Literal,
     Int64,
     Integer,
     Literal,
+    LiteralInt32,
     Number,
     SignedInteger,
 )
@@ -49,8 +50,10 @@ from astx.operators import (
     UnaryOp,
 )
 from astx.variables import (
-    VarDecl,
+    Argument,
+    InlineVariableDeclaration,
     Variable,
+    VariableDeclaration,
 )
 
 from irx.ast.blocks import (
@@ -60,6 +63,7 @@ from irx.ast.blocks import (
 )
 
 __all__ = [
+    "Argument",
     "AST",
     "ASTKind",
     "DataType",
@@ -68,10 +72,10 @@ __all__ = [
     "OperatorType",
     "SourceLocation",
     "StatementType",
-    "Call",
+    "FunctionCall",
     "Function",
     "FunctionPrototype",
-    "Return",
+    "FunctionReturn",
     "Boolean",
     "DataTypeOps",
     "Float16",
@@ -81,7 +85,8 @@ __all__ = [
     "Int8",
     "Int16",
     "Int32",
-    "Int32Literal",
+    "LiteralInt32",
+    "InlineVariableDeclaration",
     "Int64",
     "Integer",
     "Literal",
@@ -95,7 +100,7 @@ __all__ = [
     "VisibilityKind",
     "BinaryOp",
     "UnaryOp",
-    "VarDecl",
+    "VariableDeclaration",
     "Variable",
     "Block",
     "Module",

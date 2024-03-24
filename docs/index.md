@@ -7,12 +7,11 @@
 an **AST**. It is not specific for the **ArxLang** project, although it is main
 focus is to provide all needed feature for it.
 
-**IRx** uses **llvmlite** in order to generate **LLVM-IR** source, in another
-words.
+**IRx** uses **llvmlite** in order to generate **LLVM-IR** source.
 
-- Free software: BSD 3 Clause
-- Documentation: https://arxlang.github.io/irx.
+- Software License: BSD 3 Clause
+- Documentation: https://irx.arxlang.github.io.
 
 ## Features
 
-- Generate **LLVM-IR** from **ASTx**
+- Generate **LLVM-IR** from **ASTx**.
