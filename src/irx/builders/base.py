@@ -53,6 +53,11 @@ class BuilderVisitor:
         raise Exception("Not implemented yet.")
 
     @dispatch  # type: ignore[no-redef]
+    def visit(self, expr: ast.InlineVariableDeclaration) -> None:
+        """Translate an ASTx InlineVariableDeclaration expression."""
+        raise Exception("InlineVariableDeclaration not implemented yet.")
+
+    @dispatch  # type: ignore[no-redef]
     def visit(self, expr: ast.LiteralInt32) -> None:
         """Translate an ASTx LiteralInt32 expression."""
         raise Exception("Not implemented yet.")

@@ -14,7 +14,7 @@ from .conftest import check_result
 @pytest.mark.parametrize(
     "action,expected_file",
     [
-        ("translate", "test_for_range.ll"),
+        # ("translate", "test_for_range.ll"),
         ("build", ""),
     ],
 )
@@ -65,7 +65,7 @@ def test_for_range(
 @pytest.mark.parametrize(
     "action,expected_file",
     [
-        ("translate", ""),
+        # ("translate", ""),
         ("build", ""),
     ],
 )

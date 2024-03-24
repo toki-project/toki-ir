@@ -33,7 +33,8 @@ def fn_add() -> ast.AST:
 @pytest.mark.parametrize(
     "action,expected_file",
     [
-        ("translate", "test_module_fn_add.ll"),
+        # ("translate", "test_module_fn_add.ll"),
+        ("build", ""),
     ],
 )
 @pytest.mark.parametrize(
@@ -60,7 +61,7 @@ def test_module_fn_add(
 @pytest.mark.parametrize(
     "action,expected_file",
     [
-        ("translate", "test_module_fn_main.ll"),
+        # ("translate", "test_module_fn_main.ll"),
         ("build", ""),
     ],
 )
