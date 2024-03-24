@@ -653,22 +653,18 @@ class LLVMLiteIRVisitor(BuilderVisitor):
             self.named_values[llvm_arg.name] = alloca
 
         self.visit(expr.body)
-        retval = self.result_stack.pop()
-
-        # Validate the generated code, checking for consistency.
-        if retval:
-            # note: this should be improved because a function
-            #       could have multiples returns
-            self._llvm.ir_builder.ret(retval[-1])
-        else:
-            self._llvm.ir_builder.ret(ir.Constant(self._llvm.INT32_TYPE, 0))
-
         self.result_stack.append(fn)
 
     @dispatch  # type: ignore[no-redef]
     def visit(self, expr: ast.FunctionReturn) -> None:
         """Translate ASTx FunctionReturn to LLVM-IR."""
         self.visit(expr.value)
+        retval = self.result_stack.pop()
+
+        if retval:
+            self._llvm.ir_builder.ret(retval)
+        else:
+            self._llvm.ir_builder.ret_void()
 
     @dispatch  # type: ignore[no-redef]
     def visit(self, expr: ast.Variable) -> None:
