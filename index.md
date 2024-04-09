@@ -10,7 +10,7 @@ focus is to provide all needed feature for it.
 **IRx** uses **llvmlite** in order to generate **LLVM-IR** source.
 
 - Software License: BSD 3 Clause
-- Documentation: https://irx.arxlang.github.io.
+- Documentation: https://irx.arxlang.org.
 
 ## Features
 

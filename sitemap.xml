@@ -1,33 +1,33 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
-         <loc>https://arx-project.github.io/irx/</loc>
-         <lastmod>2024-03-24</lastmod>
+         <loc>https://irx.arxlang.org/</loc>
+         <lastmod>2024-04-09</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://arx-project.github.io/irx/changelog/</loc>
-         <lastmod>2024-03-24</lastmod>
+         <loc>https://irx.arxlang.org/changelog/</loc>
+         <lastmod>2024-04-09</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://arx-project.github.io/irx/contributing/</loc>
-         <lastmod>2024-03-24</lastmod>
+         <loc>https://irx.arxlang.org/contributing/</loc>
+         <lastmod>2024-04-09</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://arx-project.github.io/irx/example/</loc>
-         <lastmod>2024-03-24</lastmod>
+         <loc>https://irx.arxlang.org/installation/</loc>
+         <lastmod>2024-04-09</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://arx-project.github.io/irx/installation/</loc>
-         <lastmod>2024-03-24</lastmod>
+         <loc>https://irx.arxlang.org/api/references/</loc>
+         <lastmod>2024-04-09</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://arx-project.github.io/irx/api/references/</loc>
-         <lastmod>2024-03-24</lastmod>
+         <loc>https://irx.arxlang.org/tutorials/get-started/</loc>
+         <lastmod>2024-04-09</lastmod>
          <changefreq>daily</changefreq>
     </url>
 </urlset>
