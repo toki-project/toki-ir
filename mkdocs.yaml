@@ -1,22 +1,23 @@
 site_name: IRx
-site_url: https://arx-project.github.io/irx
+site_url: https://irx.arxlang.org
 repo_url: https://github.com/arx-project/irx
 docs_dir: ./docs
 site_dir: ./build
-# extra_css:
-#   - stylesheets/extra.css
-# Page tree
+
 nav:
   - index.md
   - Installation: installation.md
   - Changelog: changelog.md
   - Contributing: contributing.md
   - API: api/references.md
-  - Notebook page: example.ipynb
+  - Tutorials:
+      - Get Started: tutorials/get-started.ipynb
+
 theme:
   name: material
   features:
     - content.code.annotate
+    - content.code.copy
     - content.tabs.link
     - header.autohide
     - navigation.indexes
@@ -26,13 +27,25 @@ theme:
     - search.suggest
   icon:
     repo: fontawesome/brands/github
-  logo: /images/logo.png
-  favicon: /images/favicon.png
+  logo: ./images/logo.png
+  favicon: ./images/favicon.ico
   palette:
-    scheme: slate
-    primary: white
-    accent: lime
-  # custom_dir: docs/overrides
+    # Palette toggle for light mode
+    - scheme: default
+      primary: white
+      accent: lime
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+
+    # Palette toggle for dark mode
+    - scheme: slate
+      primary: white
+      accent: lime
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+
 plugins:
   - search
   - macros
@@ -44,7 +57,7 @@ plugins:
       enable_inventory: true
       handlers:
         python:
-          paths: [../src]
+          paths: [src]
 
           import:
             - https://docs.python.org/3/objects.inv
@@ -88,13 +101,14 @@ plugins:
             show_source: false
             show_modules: true
   - mkdocs-jupyter:
-      execute: true
+      execute: false
       ignore:
         - "*.py"
-      # execute_ignore: "tutorial/*Geospatial*.ipynb"
+        - ".ipynb_checkpoints/*"
       include_source: true
-      theme: dark
+      include_requirejs: true
   - literate-nav
+
 markdown_extensions:
   - admonition
   - attr_list
@@ -121,7 +135,9 @@ markdown_extensions:
   - pymdownx.tabbed:
       alternate_style: true
   - tables
-  - toc
+  - toc:
+      permalink: true
+
 extra:
   project_name: "IRx"
   team:

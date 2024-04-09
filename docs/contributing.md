@@ -1,4 +1,4 @@
-# Contributing
+# Contributing Guideline
 
 In order to be able to contribute, it is important that you understand the
 project layout. This project uses the _src layout_, which means that the package
@@ -34,13 +34,13 @@ If you are reporting a bug, please include:
 
 ### Fix Bugs
 
-Look through the GitHub issues for bugs. Anything tagged with “bug” and “help
-wanted” is open to whoever wants to implement it.
+Look through the GitHub issues for bugs. Anything tagged with "bug" and "help
+wanted" is open to whoever wants to implement it.
 
 ### Implement Features
 
-Look through the GitHub issues for features. Anything tagged with “enhancement”
-and “help wanted” is open to whoever wants to implement it.
+Look through the GitHub issues for features. Anything tagged with "enhancement"
+and "help wanted" is open to whoever wants to implement it.
 
 ### Write Documentation
 
@@ -64,34 +64,44 @@ If you are proposing a feature:
 Ready to contribute? Here’s how to set up `irx` for local development.
 
 1.  Fork the `irx` repo on GitHub.
+2.  Clone your fork locally:
 
-2.  Clone your fork locally::
+```bash
+$ git clone git@github.com:your_name_here/irx.git
+$ cd irx/
+```
 
-    $ git clone git@github.com:your_name_here/irx.git
+3.  Create a new virtual environment and install your local copy into that:
 
-3.  Install your local copy into a virtualenv. Assuming you have
-    virtualenvwrapper installed, this is how you set up your fork for local
-    development::
+```bash
+# note: you can use mamba or conda or micromamba
+$ mamba env create --file conda/dev.yaml
+$ conda activate irx
+$ poetry install
+```
 
-    $ mkvirtualenv irx $ cd irx/ $ python setup.py develop
+4.  Create a branch for local development:
 
-4.  Create a branch for local development::
+```bash
+$ git checkout -b name-of-your-bugfix-or-feature
+# Now you can make your changes locally.
+```
 
-    $ git checkout -b name-of-your-bugfix-or-feature
+5.  When you’re done making changes, check that your changes pass the linter and
+    the tests:
 
-    Now you can make your changes locally.
+```bash
+$ makim tests.linter
+$ makim tests.unittest
+```
 
-5.  When you’re done making changes, check that your changes pass flake8 and the
-    tests, including testing other Python versions with tox::
+6.  Commit your changes and push your branch to GitHub:
 
-    $ make lint $ make test
-
-    To get flake8 and tox, just pip install them into your virtualenv.
-
-6.  Commit your changes and push your branch to GitHub::
-
-    $ git add . $ git commit -m “Your detailed description of your changes.” $
-    git push origin name-of-your-bugfix-or-feature
+```bash
+$ git add .
+$ git commit -m "Your detailed description of your changes."
+$ git push origin name-of-your-bugfix-or-feature
+```
 
 7.  Submit a pull request through the GitHub website.
 
@@ -107,10 +117,16 @@ Before you submit a pull request, check that it meets these guidelines:
 
 ## Tips
 
-To run a subset of tests::
+To run a subset of tests, you can use something like:
 
+```bash
+$ pytest tests.test_binary_op
 ```
-$ pytest tests.test_tokiir
+
+or
+
+```bash
+$ makim tests.unittest --path "tests/test_binary_op" --params "-k mytest_func"
 ```
 
 ## Release
@@ -147,10 +163,15 @@ The table below shows which commit message gets you which release type when
 | `fix(pencil): stop graphite breaking when pressure is applied` | Fix Release      |
 | `feat(pencil): add 'graphiteWidth' option`                     | Feature Release  |
 | `perf(pencil): remove graphiteWidth option`                    | Chore            |
-| `BREAKING CHANGE: The graphiteWidth option has been removed`   | Breaking Release |
+| `feat(pencil)!: The graphiteWidth option has been removed`     | Breaking Release |
 
-source:
-<https://github.com/semantic-release/semantic-release/blob/master/README.md#commit-message-format>
+_NOTE: Breaking change's commit message prefix should have `!` before `:`_.
+Also, ensure to specify `feat` or `fix` in the prefix.
 
-As this project uses the `squash and merge` strategy, ensure to apply the commit
+**References:**
+
+- https://github.com/semantic-release/semantic-release/blob/master/README.md#commit-message-format
+- https://www.conventionalcommits.org/en/v1.0.0/
+
+This project uses the `squash and merge` strategy, so ensure to apply the commit
 message format to the PR's title.
