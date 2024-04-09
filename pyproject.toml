@@ -17,7 +17,7 @@ include = ["src/irx/py.typed"]
 [tool.poetry.dependencies]
 python = ">=3.8.1,<4"
 atpublic = ">=4.0"
-astx = ">=0.9"
+astx = "0.9.1"
 typing-extensions = { version = "^4", python = "<3.9" }
 llvmlite = ">=0.41.1"
 plum-dispatch = ">=2.2.2"
@@ -36,7 +36,7 @@ ipython = ">=7"
 ipykernel = ">=6.0.0"
 mkdocs = ">=1.4.3"
 mkdocs-exclude = ">=1.0.2"
-mkdocs-jupyter = ">=0.24.1"
+mkdocs-jupyter = ">=0.24.7"
 mkdocs-literate-nav = ">=0.6.0"
 mkdocs-macros-plugin = ">=0.7.0,<1"
 mkdocs-material = ">=9.1.15"
