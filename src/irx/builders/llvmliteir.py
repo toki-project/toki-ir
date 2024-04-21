@@ -7,6 +7,7 @@ import tempfile
 
 from typing import Any, Optional, cast
 
+import astx
 import sh
 
 from llvmlite import binding as llvm
@@ -14,7 +15,6 @@ from llvmlite import ir
 from plum import dispatch
 from public import public
 
-from irx import ast
 from irx.builders.base import Builder, BuilderVisitor
 
 
@@ -84,13 +84,13 @@ class LLVMLiteIRVisitor(BuilderVisitor):
     named_values: dict[str, Any] = {}  # noqa: RUF012
     _llvm: VariablesLLVM
 
-    function_protos: dict[str, ast.FunctionPrototype]
+    function_protos: dict[str, astx.FunctionPrototype]
     result_stack: list[ir.Value | ir.Function] = []  # noqa: RUF012
 
     def __init__(self) -> None:
         """Initialize LLVMTranslator object."""
         super().__init__()
-        self.function_protos: dict[str, ast.FunctionPrototype] = {}
+        self.function_protos: dict[str, astx.FunctionPrototype] = {}
         self.result_stack: list[ir.Value | ir.Function] = []
 
         self.initialize()
@@ -102,7 +102,7 @@ class LLVMLiteIRVisitor(BuilderVisitor):
 
         self._add_builtins()
 
-    def translate(self, expr: ast.AST) -> str:
+    def translate(self, expr: astx.AST) -> str:
         """Translate an ASTx expression to string."""
         self.visit(expr)
         return str(self._llvm.module)
@@ -204,12 +204,12 @@ class LLVMLiteIRVisitor(BuilderVisitor):
         return alloca
 
     @dispatch.abstract
-    def visit(self, expr: ast.AST) -> None:
+    def visit(self, expr: astx.AST) -> None:
         """Translate an ASTx expression."""
         raise Exception("Not implemented yet.")
 
     @dispatch  # type: ignore[no-redef]
-    def visit(self, expr: ast.BinaryOp) -> None:
+    def visit(self, expr: astx.BinaryOp) -> None:
         """Translate binary operation expression."""
         if expr.op_code == "=":
             # Special case '=' because we don't want to emit the lhs as an
@@ -221,7 +221,7 @@ class LLVMLiteIRVisitor(BuilderVisitor):
             # dynamic_cast for automatic error checking.
             var_lhs = expr.lhs
 
-            if not isinstance(var_lhs, ast.VariableExprAST):
+            if not isinstance(var_lhs, astx.VariableExprAST):
                 raise Exception("destination of '=' must be a variable")
 
             # Codegen the rhs.
@@ -311,7 +311,7 @@ class LLVMLiteIRVisitor(BuilderVisitor):
         raise Exception(f"Binary op {expr.op_code} not implemented yet.")
 
     @dispatch  # type: ignore[no-redef]
-    def visit(self, block: ast.Block) -> None:
+    def visit(self, block: astx.Block) -> None:
         """Translate ASTx Block to LLVM-IR."""
         result = []
         for node in block.nodes:
@@ -324,7 +324,7 @@ class LLVMLiteIRVisitor(BuilderVisitor):
         self.result_stack.append(result)
 
     @dispatch  # type: ignore[no-redef]
-    def visit(self, expr: ast.If) -> None:
+    def visit(self, expr: astx.If) -> None:
         """Translate IF statement."""
         self.visit(expr.cond)
         cond_v = self.result_stack.pop()
@@ -393,7 +393,7 @@ class LLVMLiteIRVisitor(BuilderVisitor):
         self.result_stack.append(phi)
 
     @dispatch  # type: ignore[no-redef]
-    def visit(self, expr: ast.ForCountLoop) -> None:
+    def visit(self, expr: astx.ForCountLoop) -> None:
         """Translate ASTx For Range Loop to LLVM-IR."""
         saved_block = self._llvm.ir_builder.block
         var_addr = self.create_entry_block_alloca("for_count_loop", "int32")
@@ -493,7 +493,7 @@ class LLVMLiteIRVisitor(BuilderVisitor):
         self.result_stack.append(result)
 
     @dispatch  # type: ignore[no-redef]
-    def visit(self, expr: ast.ForRangeLoop) -> None:
+    def visit(self, expr: astx.ForRangeLoop) -> None:
         """Translate ASTx For Range Loop to LLVM-IR."""
         saved_block = self._llvm.ir_builder.block
         var_addr = self.create_entry_block_alloca("for_count_loop", "int32")
@@ -593,19 +593,19 @@ class LLVMLiteIRVisitor(BuilderVisitor):
         self.result_stack.append(result)
 
     @dispatch  # type: ignore[no-redef]
-    def visit(self, expr: ast.Module) -> None:
+    def visit(self, expr: astx.Module) -> None:
         """Translate ASTx Module to LLVM-IR."""
         for node in expr.nodes:
             self.visit(node)
 
     @dispatch  # type: ignore[no-redef]
-    def visit(self, expr: ast.LiteralInt32) -> None:
+    def visit(self, expr: astx.LiteralInt32) -> None:
         """Translate ASTx LiteralInt32 to LLVM-IR."""
         result = ir.Constant(self._llvm.INT32_TYPE, expr.value)
         self.result_stack.append(result)
 
     @dispatch  # type: ignore[no-redef]
-    def visit(self, expr: ast.FunctionCall) -> None:
+    def visit(self, expr: astx.FunctionCall) -> None:
         """Translate Function FunctionCall."""
         callee_f = self.get_function(expr.callee)
 
@@ -627,7 +627,7 @@ class LLVMLiteIRVisitor(BuilderVisitor):
         self.result_stack.append(result)
 
     @dispatch  # type: ignore[no-redef]
-    def visit(self, expr: ast.Function) -> None:
+    def visit(self, expr: astx.Function) -> None:
         """Translate ASTx Function to LLVM-IR."""
         proto = expr.prototype
         self.function_protos[proto.name] = proto
@@ -656,7 +656,7 @@ class LLVMLiteIRVisitor(BuilderVisitor):
         self.result_stack.append(fn)
 
     @dispatch  # type: ignore[no-redef]
-    def visit(self, expr: ast.FunctionPrototype) -> None:
+    def visit(self, expr: astx.FunctionPrototype) -> None:
         """Translate ASTx Function Prototype to LLVM-IR."""
         args_type = [self._llvm.INT32_TYPE] * len(expr.args)
         # note: it should be dynamic
@@ -672,7 +672,7 @@ class LLVMLiteIRVisitor(BuilderVisitor):
         self.result_stack.append(fn)
 
     @dispatch  # type: ignore[no-redef]
-    def visit(self, expr: ast.FunctionReturn) -> None:
+    def visit(self, expr: astx.FunctionReturn) -> None:
         """Translate ASTx FunctionReturn to LLVM-IR."""
         self.visit(expr.value)
 
@@ -687,7 +687,7 @@ class LLVMLiteIRVisitor(BuilderVisitor):
         self._llvm.ir_builder.ret_void()
 
     @dispatch  # type: ignore[no-redef]
-    def visit(self, expr: ast.InlineVariableDeclaration) -> None:
+    def visit(self, expr: astx.InlineVariableDeclaration) -> None:
         """Translate an ASTx InlineVariableDeclaration expression."""
         if self.named_values.get(expr.name):
             raise Exception(f"Variable already declared: {expr.name}")
@@ -708,7 +708,7 @@ class LLVMLiteIRVisitor(BuilderVisitor):
         self.result_stack.append(init_val)
 
     @dispatch  # type: ignore[no-redef]
-    def visit(self, expr: ast.Variable) -> None:
+    def visit(self, expr: astx.Variable) -> None:
         """Translate ASTx Variable to LLVM-IR."""
         expr_var = self.named_values.get(expr.name)
 
@@ -719,7 +719,7 @@ class LLVMLiteIRVisitor(BuilderVisitor):
         self.result_stack.append(result)
 
     @dispatch  # type: ignore[no-redef]
-    def visit(self, expr: ast.VariableDeclaration) -> None:
+    def visit(self, expr: astx.VariableDeclaration) -> None:
         """Translate ASTx Variable to LLVM-IR."""
         if self.named_values.get(expr.name):
             raise Exception(f"Variable already declared: {expr.name}")
@@ -755,7 +755,7 @@ class LLVMLiteIR(Builder):
         super().__init__()
         self.translator: LLVMLiteIRVisitor = LLVMLiteIRVisitor()
 
-    def build(self, expr: ast.AST, output_file: str) -> None:
+    def build(self, expr: astx.AST, output_file: str) -> None:
         """Transpile the ASTx to LLVM-IR and build it to an executable file."""
         result = self.translate(expr)
 

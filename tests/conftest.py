@@ -5,7 +5,8 @@ import tempfile
 from difflib import SequenceMatcher
 from pathlib import Path
 
-from irx import ast
+import astx
+
 from irx.builders.base import Builder
 
 TEST_DATA_PATH = Path(__file__).parent / "data"
@@ -19,7 +20,7 @@ def similarity(text_a: str, text_b: str) -> float:
 def check_result(
     action: str,
     builder: Builder,
-    module: ast.Module,
+    module: astx.Module,
     expected_file: str = "",
     similarity_factor: float = 0.35,  # TODO: change it to 0.95
 ) -> None:
