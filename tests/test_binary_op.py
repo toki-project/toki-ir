@@ -2,9 +2,9 @@
 
 from typing import Type
 
+import astx
 import pytest
 
-from irx import ast
 from irx.builders.base import Builder
 from irx.builders.llvmliteir import LLVMLiteIR
 
@@ -31,33 +31,33 @@ def test_binary_op_basic(
     builder = builder_class()
     module = builder.module()
 
-    decl_a = ast.VariableDeclaration(
-        name="a", type_=ast.Int32, value=ast.LiteralInt32(1)
+    decl_a = astx.VariableDeclaration(
+        name="a", type_=astx.Int32, value=astx.LiteralInt32(1)
     )
-    decl_b = ast.VariableDeclaration(
-        name="b", type_=ast.Int32, value=ast.LiteralInt32(2)
+    decl_b = astx.VariableDeclaration(
+        name="b", type_=astx.Int32, value=astx.LiteralInt32(2)
     )
-    decl_c = ast.VariableDeclaration(
-        name="c", type_=ast.Int32, value=ast.LiteralInt32(4)
+    decl_c = astx.VariableDeclaration(
+        name="c", type_=astx.Int32, value=astx.LiteralInt32(4)
     )
 
-    a = ast.Variable("a")
-    b = ast.Variable("b")
-    c = ast.Variable("c")
+    a = astx.Variable("a")
+    b = astx.Variable("b")
+    c = astx.Variable("c")
 
-    lit_1 = ast.LiteralInt32(1)
+    lit_1 = astx.LiteralInt32(1)
 
     basic_op = lit_1 + b - a * c / a + (b - a + c / a)
 
-    main_proto = ast.FunctionPrototype(
-        name="main", args=tuple(), return_type=ast.Int32
+    main_proto = astx.FunctionPrototype(
+        name="main", args=tuple(), return_type=astx.Int32
     )
-    main_block = ast.Block()
+    main_block = astx.Block()
     main_block.append(decl_a)
     main_block.append(decl_b)
     main_block.append(decl_c)
-    main_block.append(ast.FunctionReturn(basic_op))
-    main_fn = ast.Function(prototype=main_proto, body=main_block)
+    main_block.append(astx.FunctionReturn(basic_op))
+    main_fn = astx.Function(prototype=main_proto, body=main_block)
 
     module.block.append(main_fn)
     check_result(action, builder, module, expected_file)

@@ -2,9 +2,9 @@
 
 from typing import Type
 
+import astx
 import pytest
 
-from irx import ast
 from irx.builders.base import Builder
 from irx.builders.llvmliteir import LLVMLiteIR
 
@@ -31,15 +31,15 @@ def test_for_range(
     builder = builder_class()
 
     # `for` statement
-    var_a = ast.InlineVariableDeclaration(
-        "a", type_=ast.Int32, value=ast.LiteralInt32(-1)
+    var_a = astx.InlineVariableDeclaration(
+        "a", type_=astx.Int32, value=astx.LiteralInt32(-1)
     )
-    start = ast.LiteralInt32(1)
-    end = ast.LiteralInt32(10)
-    step = ast.LiteralInt32(1)
-    body = ast.Block()
-    body.append(ast.LiteralInt32(2))
-    for_loop = ast.ForRangeLoop(
+    start = astx.LiteralInt32(1)
+    end = astx.LiteralInt32(10)
+    step = astx.LiteralInt32(1)
+    body = astx.Block()
+    body.append(astx.LiteralInt32(2))
+    for_loop = astx.ForRangeLoop(
         variable=var_a,
         start=start,
         end=end,
@@ -48,13 +48,13 @@ def test_for_range(
     )
 
     # main function
-    proto = ast.FunctionPrototype(
-        name="main", args=tuple(), return_type=ast.Int32
+    proto = astx.FunctionPrototype(
+        name="main", args=tuple(), return_type=astx.Int32
     )
-    block = ast.Block()
+    block = astx.Block()
     block.append(for_loop)
-    block.append(ast.FunctionReturn(ast.LiteralInt32(0)))
-    fn_main = ast.Function(prototype=proto, body=block)
+    block.append(astx.FunctionReturn(astx.LiteralInt32(0)))
+    fn_main = astx.Function(prototype=proto, body=block)
 
     module = builder.module()
     module.block.append(fn_main)
@@ -83,16 +83,16 @@ def test_for_count(
 
     # NOTE: it seems that the systable in the tests is not correctly
     # sanitized, the variable `a` was renamed to `a2`
-    init_a = ast.InlineVariableDeclaration(
-        "a2", type_=ast.Int32, value=ast.LiteralInt32(0)
+    init_a = astx.InlineVariableDeclaration(
+        "a2", type_=astx.Int32, value=astx.LiteralInt32(0)
     )
-    var_a = ast.Variable("a2")
-    cond = ast.BinaryOp(op_code="<", lhs=var_a, rhs=ast.LiteralInt32(10))
-    update = ast.UnaryOp(op_code="++", operand=var_a)
+    var_a = astx.Variable("a2")
+    cond = astx.BinaryOp(op_code="<", lhs=var_a, rhs=astx.LiteralInt32(10))
+    update = astx.UnaryOp(op_code="++", operand=var_a)
 
-    for_body = ast.Block()
-    for_body.append(ast.LiteralInt32(2))
-    for_loop = ast.ForCountLoop(
+    for_body = astx.Block()
+    for_body.append(astx.LiteralInt32(2))
+    for_loop = astx.ForCountLoop(
         initializer=init_a,
         condition=cond,
         update=update,
@@ -100,13 +100,13 @@ def test_for_count(
     )
 
     # main function
-    proto = ast.FunctionPrototype(
-        name="main", args=tuple(), return_type=ast.Int32
+    proto = astx.FunctionPrototype(
+        name="main", args=tuple(), return_type=astx.Int32
     )
-    fn_block = ast.Block()
+    fn_block = astx.Block()
     fn_block.append(for_loop)
-    fn_block.append(ast.FunctionReturn(ast.LiteralInt32(0)))
-    fn_main = ast.Function(prototype=proto, body=fn_block)
+    fn_block.append(astx.FunctionReturn(astx.LiteralInt32(0)))
+    fn_main = astx.Function(prototype=proto, body=fn_block)
 
     module = builder.module()
     module.block.append(fn_main)

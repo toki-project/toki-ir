@@ -2,9 +2,9 @@
 
 from typing import Type
 
+import astx
 import pytest
 
-from irx import ast
 from irx.builders.base import Builder
 from irx.builders.llvmliteir import LLVMLiteIR
 
@@ -12,22 +12,22 @@ from .conftest import check_result
 
 
 @pytest.fixture
-def fn_add() -> ast.AST:
+def fn_add() -> astx.AST:
     """Create a fixture for a function `add`."""
-    var_a = ast.Argument(
-        name="a", type_=ast.Int32, default=ast.LiteralInt32(1)
+    var_a = astx.Argument(
+        name="a", type_=astx.Int32, default=astx.LiteralInt32(1)
     )
-    var_b = ast.Argument(
-        name="b", type_=ast.Int32, default=ast.LiteralInt32(2)
+    var_b = astx.Argument(
+        name="b", type_=astx.Int32, default=astx.LiteralInt32(2)
     )
 
-    proto = ast.FunctionPrototype(
-        name="add", args=(var_a, var_b), return_type=ast.Int32
+    proto = astx.FunctionPrototype(
+        name="add", args=(var_a, var_b), return_type=astx.Int32
     )
-    block = ast.Block()
+    block = astx.Block()
     var_sum = var_a + var_b
-    block.append(ast.FunctionReturn(var_sum))
-    return ast.Function(prototype=proto, body=block)
+    block.append(astx.FunctionReturn(var_sum))
+    return astx.Function(prototype=proto, body=block)
 
 
 @pytest.mark.parametrize(
@@ -46,7 +46,7 @@ def fn_add() -> ast.AST:
 def test_module_fn_main(
     action: str,
     expected_file: str,
-    fn_add: ast.AST,
+    fn_add: astx.AST,
     builder_class: Type[Builder],
 ) -> None:
     """Test ASTx Module with a main function and a function called add."""
@@ -55,12 +55,12 @@ def test_module_fn_main(
     module = builder.module()
     module.block.append(fn_add)
 
-    main_proto = ast.FunctionPrototype(
-        name="main", args=tuple(), return_type=ast.Int32
+    main_proto = astx.FunctionPrototype(
+        name="main", args=tuple(), return_type=astx.Int32
     )
-    main_block = ast.Block()
-    main_block.append(ast.FunctionReturn(ast.LiteralInt32(0)))
-    main_fn = ast.Function(prototype=main_proto, body=main_block)
+    main_block = astx.Block()
+    main_block.append(astx.FunctionReturn(astx.LiteralInt32(0)))
+    main_fn = astx.Function(prototype=main_proto, body=main_block)
 
     module.block.append(main_fn)
 

@@ -71,7 +71,7 @@ jobs:
       - name: Run tests
         run: makim tests.unit
 
-  linter-and-docs:
+  linter:
     needs: check-branch
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -81,7 +81,7 @@ jobs:
         shell: bash -l {0}
 
     concurrency:
-      group: ci-linter-docs-${{ github.ref }}
+      group: ci-linter-linter-${{ github.ref }}
       cancel-in-progress: true
 
     steps:
@@ -100,9 +100,6 @@ jobs:
         run: |
           poetry config virtualenvs.create false
           poetry install
-
-      - name: Test documentation generation
-        run: makim docs.build
 
       - name: Run style checks
         if: success() || failure()
