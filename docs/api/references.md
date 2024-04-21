@@ -4,12 +4,6 @@
 
 ---
 
-::: irx.ast
-
-::: irx.ast.blocks
-
----
-
 ::: irx.builders
 
 ::: irx.builders.base
