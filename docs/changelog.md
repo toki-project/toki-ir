@@ -1,6 +1,13 @@
 # Release Notes
 ---
 
+# [1.2.0](https://github.com/arxlang/irx/compare/1.1.0...1.2.0) (2024-04-21)
+
+
+### Features
+
+* Replace local customized AST implementation for Target and Module by astx classes ([#13](https://github.com/arxlang/irx/issues/13)) ([972eba6](https://github.com/arxlang/irx/commit/972eba6cbd0ba94f8425fa4d69788a56685aa1aa))
+
 # [1.1.0](https://github.com/arxlang/irx/compare/1.0.2...1.1.0) (2024-03-24)
 
 
