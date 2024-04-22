@@ -2,32 +2,57 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
          <loc>https://irx.arxlang.org/</loc>
-         <lastmod>2024-04-21</lastmod>
+         <lastmod>2024-04-22</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://irx.arxlang.org/changelog/</loc>
-         <lastmod>2024-04-21</lastmod>
+         <lastmod>2024-04-22</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://irx.arxlang.org/contributing/</loc>
-         <lastmod>2024-04-21</lastmod>
+         <lastmod>2024-04-22</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://irx.arxlang.org/installation/</loc>
-         <lastmod>2024-04-21</lastmod>
+         <lastmod>2024-04-22</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://irx.arxlang.org/api/references/</loc>
-         <lastmod>2024-04-21</lastmod>
+         <loc>https://irx.arxlang.org/api/</loc>
+         <lastmod>2024-04-22</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
+         <loc>https://irx.arxlang.org/api/SUMMARY/</loc>
+         <lastmod>2024-04-22</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
+         <loc>https://irx.arxlang.org/api/builders/</loc>
+         <lastmod>2024-04-22</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
+         <loc>https://irx.arxlang.org/api/builders/base/</loc>
+         <lastmod>2024-04-22</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
+         <loc>https://irx.arxlang.org/api/builders/llvmliteir/</loc>
+         <lastmod>2024-04-22</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
+         <loc>https://irx.arxlang.org/api/builders/symbol_table/</loc>
+         <lastmod>2024-04-22</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://irx.arxlang.org/tutorials/get-started/</loc>
-         <lastmod>2024-04-21</lastmod>
+         <lastmod>2024-04-22</lastmod>
          <changefreq>daily</changefreq>
     </url>
 </urlset>
