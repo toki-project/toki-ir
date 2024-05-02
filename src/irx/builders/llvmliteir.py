@@ -667,7 +667,7 @@ class LLVMLiteIRVisitor(BuilderVisitor):
 
         # Set names for all arguments.
         for idx, arg in enumerate(fn.args):
-            fn.args[idx].name = expr.args[idx].name
+            arg.name = expr.args[idx].name
 
         self.result_stack.append(fn)
 
