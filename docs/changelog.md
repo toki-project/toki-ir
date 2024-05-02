@@ -1,6 +1,13 @@
 # Release Notes
 ---
 
+## [1.2.1](https://github.com/arxlang/irx/compare/1.2.0...1.2.1) (2024-05-02)
+
+
+### Bug Fixes
+
+* Update ASTx to v0.12.2 ([#15](https://github.com/arxlang/irx/issues/15)) ([3ae5797](https://github.com/arxlang/irx/commit/3ae57979b1f9f7a7741a14001d153b0981d80d5a))
+
 # [1.2.0](https://github.com/arxlang/irx/compare/1.1.0...1.2.0) (2024-04-21)
 
 

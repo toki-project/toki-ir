@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pyirx"
-version = "1.2.0"  # semantic-release
+version = "1.2.1"  # semantic-release
 description = "IRx"
 readme = "docs/index.md"
 authors = ["Ivan Ogasawara <ivan.ogasawara@gmail.com>"]
