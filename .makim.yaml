@@ -1,7 +1,7 @@
 version: 1.0
 groups:
   clean:
-    targets:
+    tasks:
       tmp:
         help: remove build artifacts, compiled files, and cache
         shell: bash
@@ -20,7 +20,7 @@ groups:
           rm -fr .pytest_cache
 
   tests:
-    targets:
+    tasks:
       linter:
         help: run linter tools
         run: |
@@ -40,11 +40,16 @@ groups:
             default: "-vv"
         run: pytest -s ${{ args.path }} ${{ args.params }}
 
+      notebooks:
+        help: test jupyter notebooks
+        run: pytest -vv --nbmake docs/tutorials
+
       ci:
         help: run the sames tests executed on CI
         dependencies:
-          - target: tests.unit
-          - target: tests.linter
+          - task: tests.unit
+          - task: tests.notebooks
+          - task: tests.linter
 
       build:
         help: build the temporary test c file
@@ -76,7 +81,7 @@ groups:
           clang ${{ args.file }}.o -o ${{ args.file }}
 
   docs:
-    targets:
+    tasks:
       build:
         help: build documentation
         run: |
@@ -102,7 +107,7 @@ groups:
           -p "@google/semantic-release-replace-plugin" \
           semantic-release
 
-    targets:
+    tasks:
       ci:
         help: run semantic release on CI
         run: ${{ vars.app }} --ci

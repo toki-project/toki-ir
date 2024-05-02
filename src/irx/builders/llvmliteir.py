@@ -658,7 +658,7 @@ class LLVMLiteIRVisitor(BuilderVisitor):
     @dispatch  # type: ignore[no-redef]
     def visit(self, expr: astx.FunctionPrototype) -> None:
         """Translate ASTx Function Prototype to LLVM-IR."""
-        args_type = [self._llvm.INT32_TYPE] * len(expr.args)
+        args_type = [self._llvm.INT32_TYPE] * len(expr.args.nodes)
         # note: it should be dynamic
         return_type = self._llvm.get_data_type("int32")
         fn_type = ir.FunctionType(return_type, args_type, False)
@@ -667,7 +667,7 @@ class LLVMLiteIRVisitor(BuilderVisitor):
 
         # Set names for all arguments.
         for idx, arg in enumerate(fn.args):
-            fn.args[idx].name = expr.args[idx].name
+            arg.name = expr.args[idx].name
 
         self.result_stack.append(fn)
 
