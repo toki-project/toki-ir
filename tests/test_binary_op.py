@@ -50,7 +50,7 @@ def test_binary_op_basic(
     basic_op = lit_1 + b - a * c / a + (b - a + c / a)
 
     main_proto = astx.FunctionPrototype(
-        name="main", args=tuple(), return_type=astx.Int32
+        name="main", args=astx.Arguments(), return_type=astx.Int32
     )
     main_block = astx.Block()
     main_block.append(decl_a)

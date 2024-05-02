@@ -144,13 +144,13 @@ wheel = ">=0.23.0,<1.0"
 
 [[package]]
 name = "astx"
-version = "0.11.0"
+version = "0.12.1"
 description = "ASTx is an agnostic expression structure for AST."
 optional = false
 python-versions = "<4,>=3.8.1"
 files = [
-    {file = "astx-0.11.0-py3-none-any.whl", hash = "sha256:d6d8771f69979d89bfa4a6a87db6f8db27318c66af7cc8c4fadb608a3574eaa6"},
-    {file = "astx-0.11.0.tar.gz", hash = "sha256:ec73d73c3cca36d89e72a3bca63a77d4b0ead85960ea51a68e8085cc956160ec"},
+    {file = "astx-0.12.1-py3-none-any.whl", hash = "sha256:8279bab3df643708af64d9cda321e13f1cc1718aea496515fd815de5c5882770"},
+    {file = "astx-0.12.1.tar.gz", hash = "sha256:7265229b75a6526a07699a2048b855239db1bf45b09afe0284257be13ff68458"},
 ]
 
 [package.dependencies]
@@ -1510,13 +1510,13 @@ files = [
 
 [[package]]
 name = "makim"
-version = "1.15.0"
+version = "1.15.1"
 description = "Simplify the usage of containers"
 optional = false
 python-versions = "<4,>=3.8.1"
 files = [
-    {file = "makim-1.15.0-py3-none-any.whl", hash = "sha256:01397559a6d58c0f9261d61e308e8bf177755b6a34e6b104bf18ed05a068d432"},
-    {file = "makim-1.15.0.tar.gz", hash = "sha256:1eb5a1abdfb24b589e66342d69c0b6ea14fd0a44face3aeb34b7784c33d7eda8"},
+    {file = "makim-1.15.1-py3-none-any.whl", hash = "sha256:c5e9b8f09b2f8287679ac865bcb54d42d321bb0c8ea0225fe1464147de79afa5"},
+    {file = "makim-1.15.1.tar.gz", hash = "sha256:1dd3b4e93a10902772b9f0072f70660a041a835cf2212e95336d08239fc84ec5"},
 ]
 
 [package.dependencies]
@@ -3696,4 +3696,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8.1,<4"
-content-hash = "c0c4f1f706c4eb53e37bdbeacbb644fb513e0dc883187764f4b6a6ead54808fa"
+content-hash = "b68feb0931bd22ca0974ec687424383dcf614c9568c4892592154afaa09b9dbb"

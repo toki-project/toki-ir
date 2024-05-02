@@ -49,7 +49,7 @@ def test_for_range(
 
     # main function
     proto = astx.FunctionPrototype(
-        name="main", args=tuple(), return_type=astx.Int32
+        name="main", args=astx.Arguments(), return_type=astx.Int32
     )
     block = astx.Block()
     block.append(for_loop)
@@ -101,7 +101,7 @@ def test_for_count(
 
     # main function
     proto = astx.FunctionPrototype(
-        name="main", args=tuple(), return_type=astx.Int32
+        name="main", args=astx.Arguments(), return_type=astx.Int32
     )
     fn_block = astx.Block()
     fn_block.append(for_loop)
