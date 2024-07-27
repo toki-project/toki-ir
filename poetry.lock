@@ -161,13 +161,13 @@ wheel = ">=0.23.0,<1.0"
 
 [[package]]
 name = "astx"
-version = "0.13.0"
+version = "0.13.2"
 description = "ASTx is an agnostic expression structure for AST."
 optional = false
 python-versions = "<4,>=3.8.1"
 files = [
-    {file = "astx-0.13.0-py3-none-any.whl", hash = "sha256:9837f1f190bebc0044093f58de0a9fbb30ac5d929247543cc048e8bd72f630d8"},
-    {file = "astx-0.13.0.tar.gz", hash = "sha256:16e0434678c622690644227ce5d2ac44f525a2e6b92218fc1bc3d6f25bc22cd7"},
+    {file = "astx-0.13.2-py3-none-any.whl", hash = "sha256:44c6feb418049f91d7ecf1402c92856aae68855ff8485bb98eefd4cbb6f95d35"},
+    {file = "astx-0.13.2.tar.gz", hash = "sha256:586c12fee00fc991900a5d62e67ecf84e45ef8b8a9c5e44655c1dddc4bb3bd10"},
 ]
 
 [package.dependencies]
@@ -3844,4 +3844,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8.1,<4"
-content-hash = "b25ff77906fcb702fc7e55df6dd54aaca8e7500daa8cb5c79b71343f511b6297"
+content-hash = "1e58deec480abf59638b655e8af2b258bdecce0f34dde9b7573d55ac38ff34e1"
