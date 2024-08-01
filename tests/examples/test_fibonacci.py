@@ -26,7 +26,7 @@ from ..conftest import check_result
 def test_function_call_fibonacci(
     action: str, expected_file: str, builder_class: Type[Builder]
 ) -> None:
-    """Test the FunctionCall class with fibonacci."""
+    """Test the FunctionCall class with Fibonacci."""
     # Initialize the ASTx module
     builder = builder_class()
     module = builder.module()
@@ -42,28 +42,30 @@ def test_function_call_fibonacci(
     fib_block = astx.Block()
 
     # Declare the variables
-    decl_a = astx.VariableDeclaration(
+    decl_a = astx.VariableDeclaration(  # noqa: F841
         name="a",
         type_=astx.Int32,
         value=astx.LiteralInt32(0),
         parent=fib_block,
     )
-    decl_b = astx.VariableDeclaration(
+    decl_b = astx.VariableDeclaration(  # noqa: F841
         name="b",
         type_=astx.Int32,
         value=astx.LiteralInt32(1),
         parent=fib_block,
     )
-    decl_i = astx.VariableDeclaration(
+    decl_i = astx.VariableDeclaration(  # noqa: F841
         name="i",
         type_=astx.Int32,
         value=astx.LiteralInt32(2),
         parent=fib_block,
     )
-
-    assert decl_a
-    assert decl_b
-    assert decl_i
+    decl_sum = astx.VariableDeclaration(  # noqa: F841
+        name="sum",
+        type_=astx.Int32,
+        value=astx.LiteralInt32(0),
+        parent=fib_block,
+    )
 
     # Create the loop condition
     cond = astx.BinaryOp(
@@ -91,7 +93,7 @@ def test_function_call_fibonacci(
         ),
     )
 
-    # Add assignments to the loop body
+    # Add declarations and assignments to the loop body
     loop_block.append(assign_sum)
     loop_block.append(assign_a)
     loop_block.append(assign_b)
@@ -110,7 +112,5 @@ def test_function_call_fibonacci(
 
     # Append the Fibonacci function to the module block
     module.block.append(fib_fn)
-
-    breakpoint()
 
     check_result(action, builder, module, expected_file)
