@@ -324,7 +324,7 @@ class LLVMLiteIRVisitor(BuilderVisitor):
         self.result_stack.append(result)
 
     @dispatch  # type: ignore[no-redef]
-    def visit(self, expr: astx.If) -> None:
+    def visit(self, expr: astx.IfStmt) -> None:
         """Translate IF statement."""
         self.visit(expr.cond)
         cond_v = self.result_stack.pop()
@@ -393,7 +393,7 @@ class LLVMLiteIRVisitor(BuilderVisitor):
         self.result_stack.append(phi)
 
     @dispatch  # type: ignore[no-redef]
-    def visit(self, expr: astx.ForCountLoop) -> None:
+    def visit(self, expr: astx.ForCountLoopStmt) -> None:
         """Translate ASTx For Range Loop to LLVM-IR."""
         saved_block = self._llvm.ir_builder.block
         var_addr = self.create_entry_block_alloca("for_count_loop", "int32")
@@ -493,7 +493,7 @@ class LLVMLiteIRVisitor(BuilderVisitor):
         self.result_stack.append(result)
 
     @dispatch  # type: ignore[no-redef]
-    def visit(self, expr: astx.ForRangeLoop) -> None:
+    def visit(self, expr: astx.ForRangeLoopStmt) -> None:
         """Translate ASTx For Range Loop to LLVM-IR."""
         saved_block = self._llvm.ir_builder.block
         var_addr = self.create_entry_block_alloca("for_count_loop", "int32")

@@ -63,17 +63,17 @@ class BuilderVisitor:
         raise Exception("Not implemented yet.")
 
     @dispatch  # type: ignore[no-redef]
-    def visit(self, expr: astx.ForCountLoop) -> None:
-        """Translate an ASTx ForCountLoop expression."""
+    def visit(self, expr: astx.ForCountLoopStmt) -> None:
+        """Translate an ASTx ForCountLoopStmt expression."""
         raise Exception("Not implemented yet.")
 
     @dispatch  # type: ignore[no-redef]
-    def visit(self, expr: astx.ForRangeLoop) -> None:
-        """Translate an ASTx ForRangeLoop expression."""
+    def visit(self, expr: astx.ForRangeLoopStmt) -> None:
+        """Translate an ASTx ForRangeLoopStmt expression."""
         raise Exception("Not implemented yet.")
 
     @dispatch  # type: ignore[no-redef]
-    def visit(self, expr: astx.If) -> None:
+    def visit(self, expr: astx.IfStmt) -> None:
         """Translate an ASTx If expression."""
         raise Exception("Not implemented yet.")
 

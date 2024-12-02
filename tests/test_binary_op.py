@@ -32,13 +32,13 @@ def test_binary_op_basic(
     module = builder.module()
 
     decl_a = astx.VariableDeclaration(
-        name="a", type_=astx.Int32, value=astx.LiteralInt32(1)
+        name="a", type_=astx.Int32(), value=astx.LiteralInt32(1)
     )
     decl_b = astx.VariableDeclaration(
-        name="b", type_=astx.Int32, value=astx.LiteralInt32(2)
+        name="b", type_=astx.Int32(), value=astx.LiteralInt32(2)
     )
     decl_c = astx.VariableDeclaration(
-        name="c", type_=astx.Int32, value=astx.LiteralInt32(4)
+        name="c", type_=astx.Int32(), value=astx.LiteralInt32(4)
     )
 
     a = astx.Variable("a")
@@ -50,7 +50,7 @@ def test_binary_op_basic(
     basic_op = lit_1 + b - a * c / a + (b - a + c / a)
 
     main_proto = astx.FunctionPrototype(
-        name="main", args=astx.Arguments(), return_type=astx.Int32
+        name="main", args=astx.Arguments(), return_type=astx.Int32()
     )
     main_block = astx.Block()
     main_block.append(decl_a)

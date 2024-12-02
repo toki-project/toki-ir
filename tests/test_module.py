@@ -15,14 +15,14 @@ from .conftest import check_result
 def fn_add() -> astx.AST:
     """Create a fixture for a function `add`."""
     var_a = astx.Argument(
-        name="a", type_=astx.Int32, default=astx.LiteralInt32(1)
+        name="a", type_=astx.Int32(), default=astx.LiteralInt32(1)
     )
     var_b = astx.Argument(
-        name="b", type_=astx.Int32, default=astx.LiteralInt32(2)
+        name="b", type_=astx.Int32(), default=astx.LiteralInt32(2)
     )
 
     proto = astx.FunctionPrototype(
-        name="add", args=astx.Arguments(var_a, var_b), return_type=astx.Int32
+        name="add", args=astx.Arguments(var_a, var_b), return_type=astx.Int32()
     )
     block = astx.Block()
     var_sum = var_a + var_b
@@ -56,7 +56,7 @@ def test_module_fn_main(
     module.block.append(fn_add)
 
     main_proto = astx.FunctionPrototype(
-        name="main", args=astx.Arguments(), return_type=astx.Int32
+        name="main", args=astx.Arguments(), return_type=astx.Int32()
     )
     main_block = astx.Block()
     main_block.append(astx.FunctionReturn(astx.LiteralInt32(0)))
