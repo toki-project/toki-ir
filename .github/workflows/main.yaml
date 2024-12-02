@@ -27,16 +27,16 @@ jobs:
           pr_sha: ${{ github.event.pull_request.head.sha }}
 
   tests:
-    needs: check-branch
     timeout-minutes: 10
     strategy:
+      fail-fast: false
       matrix:
         python_version:
-          - "3.8"
           - "3.9"
           - "3.10"
           - "3.11"
           - "3.12"
+          - "3.13"
         os:
           - "ubuntu"
           # - "macos"
@@ -71,7 +71,6 @@ jobs:
         run: makim tests.unit
 
   linter:
-    needs: check-branch
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
