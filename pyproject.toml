@@ -15,10 +15,10 @@ packages = [
 include = ["src/irx/py.typed"]
 
 [tool.poetry.dependencies]
-python = ">=3.8.1,<4"
+python = ">=3.9,<4"
 atpublic = ">=4.0"
-astx = "0.12.2"
-typing-extensions = { version = "^4", python = "<3.9" }
+astx = "0.16.1"
+typing-extensions = { version = "^4" }
 llvmlite = ">=0.41.1"
 plum-dispatch = ">=2.2.2"
 
@@ -104,7 +104,7 @@ lines-between-types = 1
 quote-style = "double"
 
 [tool.mypy]
-python_version = "3.8"
+python_version = "3.9"
 check_untyped_defs = true
 strict = true
 ignore_missing_imports = true

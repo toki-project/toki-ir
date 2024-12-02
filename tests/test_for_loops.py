@@ -32,14 +32,14 @@ def test_for_range(
 
     # `for` statement
     var_a = astx.InlineVariableDeclaration(
-        "a", type_=astx.Int32, value=astx.LiteralInt32(-1)
+        "a", type_=astx.Int32(), value=astx.LiteralInt32(-1)
     )
     start = astx.LiteralInt32(1)
     end = astx.LiteralInt32(10)
     step = astx.LiteralInt32(1)
     body = astx.Block()
     body.append(astx.LiteralInt32(2))
-    for_loop = astx.ForRangeLoop(
+    for_loop = astx.ForRangeLoopStmt(
         variable=var_a,
         start=start,
         end=end,
@@ -49,7 +49,7 @@ def test_for_range(
 
     # main function
     proto = astx.FunctionPrototype(
-        name="main", args=astx.Arguments(), return_type=astx.Int32
+        name="main", args=astx.Arguments(), return_type=astx.Int32()
     )
     block = astx.Block()
     block.append(for_loop)
@@ -84,7 +84,7 @@ def test_for_count(
     # NOTE: it seems that the systable in the tests is not correctly
     # sanitized, the variable `a` was renamed to `a2`
     init_a = astx.InlineVariableDeclaration(
-        "a2", type_=astx.Int32, value=astx.LiteralInt32(0)
+        "a2", type_=astx.Int32(), value=astx.LiteralInt32(0)
     )
     var_a = astx.Variable("a2")
     cond = astx.BinaryOp(op_code="<", lhs=var_a, rhs=astx.LiteralInt32(10))
@@ -92,7 +92,7 @@ def test_for_count(
 
     for_body = astx.Block()
     for_body.append(astx.LiteralInt32(2))
-    for_loop = astx.ForCountLoop(
+    for_loop = astx.ForCountLoopStmt(
         initializer=init_a,
         condition=cond,
         update=update,
@@ -101,7 +101,7 @@ def test_for_count(
 
     # main function
     proto = astx.FunctionPrototype(
-        name="main", args=astx.Arguments(), return_type=astx.Int32
+        name="main", args=astx.Arguments(), return_type=astx.Int32()
     )
     fn_block = astx.Block()
     fn_block.append(for_loop)
