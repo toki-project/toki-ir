@@ -7,7 +7,7 @@ dependencies:
   - clangdev 14.*
   - graphviz
   - pip
-  - poetry >=1.5
+  - poetry >=2
   - python
   - nodejs # used by semantic-release
   - shellcheck
