@@ -1,10 +1,27 @@
-[tool.poetry]
+[project]
 name = "pyirx"
 version = "1.2.1"  # semantic-release
 description = "IRx"
 readme = "docs/index.md"
-authors = ["Ivan Ogasawara <ivan.ogasawara@gmail.com>"]
+authors = [
+  {name = "Ivan Ogasawara", email = "ivan.ogasawara@gmail.com"}
+]
 license = "BSD 3 Clause"
+requires-python = ">=3.9,<4"
+dependencies = [
+  "atpublic >= 4.0",
+  "astx == 0.16.1",
+  "llvmlite  >= 0.41.1",
+  "plum-dispatch >= 2.2.2",
+  "typing-extensions >=4 ; python_version < '3.9'",
+  "eval-type-backport >=0.2 ; python_version < '3.10'",
+]
+
+[build-system]
+requires = ["poetry-core>=2"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry]
 exclude = [
   ".git/*",
   ".env*",
@@ -13,14 +30,6 @@ packages = [
   {include = "irx", from="src"},
 ]
 include = ["src/irx/py.typed"]
-
-[tool.poetry.dependencies]
-python = ">=3.9,<4"
-atpublic = ">=4.0"
-astx = "0.16.1"
-typing-extensions = { version = "^4" }
-llvmlite = ">=0.41.1"
-plum-dispatch = ">=2.2.2"
 
 [tool.poetry.group.dev.dependencies]
 pytest = ">=7.3.2"
@@ -44,8 +53,6 @@ mkdocstrings = {version=">=0.24.3", extras=["python"]}
 makim = "1.15.1"
 pdbpp = ">=0.10.3"
 jupyterlab = ">=4.0.7"
-# 'PosixPath' object has no attribute 'endswith'
-virtualenv = "<=20.25.1"
 mkdocs-gen-files = ">=0.5.0"
 nbmake = ">=1.5.3"
 
